@@ -1400,8 +1400,10 @@
             const moneyRe = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+[.,]\d{2}|\d+)/i;
             for (let i = 0; i < normLines.length; i++) {
                 if (regex.test(normLines[i])) {
-                    const after = normLines[i].replace(regex, ' ');
-                    const m = after.match(moneyRe) || lines[i].match(moneyRe) || (lines[i + 1] && lines[i + 1].match(moneyRe));
+                    // Pega só o trecho logo após o rótulo, parando antes da coluna da direita
+                    let after = normLines[i].split(regex).pop() || '';
+                    after = after.split(/(?:pernoite|tarifa|diaria|despesas)/)[0];
+                    const m = after.match(moneyRe) || (lines[i + 1] && lines[i + 1].match(moneyRe));
                     if (m) {
                         const val = parseBrNumber(m[1]);
                         if (val !== null) return val;
@@ -1421,7 +1423,7 @@
                 // Formato típico da folha: "CURITIBA x POUSO ALEGRE - KM 690"
                 const cleanLine = lines[i].replace(/[|[\]{}_]/g, ' ').replace(/\s+/g, ' ').trim();
                 if (/km\s*x\s*r\$/.test(normalize(cleanLine))) continue;
-                const routeMatch = cleanLine.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,30}?)\s+[xX×]\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,30})/);
+                const routeMatch = cleanLine.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,35})\s+[xX×]\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,35})/);
                 if (routeMatch) {
                     const from = routeMatch[1].trim();
                     const to = routeMatch[2].replace(/\s*-\s*km.*$/i, '').trim();
@@ -1447,12 +1449,57 @@
                 destination,
                 date: dateMatch ? dateMatch[1] : null,
                 advance: extractMoneyNear(lines, normLines, /(adiantamento|adiant\.?)/),
-                toll: extractMoneyNear(lines, normLines, /pedagio/),
+                toll: extractMoneyNear(lines, normLines, /(pedagio|ped[aá]g[il]o|pago\s*\(\+\))/),
                 busTicket: extractMoneyNear(lines, normLines, /(passagem\s+rodoviaria|rodoviaria)/),
                 bonus: extractMoneyNear(lines, normLines, /(programa\s+de\s+bonificacao|bonificacao|bonus|premiacao)/),
                 remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/),
                 freightNet: extractMoneyNear(lines, normLines, /(frete\s+contratado\s+liquido|frete\s+liquido|frete\s+contratado)/)
             };
+        }
+
+        // Reduz resolução e aumenta contraste para o OCR rodar muito mais rápido e ler melhor
+        function preprocessImageForOCR(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    const maxWidth = 1400;
+                    const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(img.width * scale);
+                    canvas.height = Math.round(img.height * scale);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const d = imgData.data;
+                    for (let i = 0; i < d.length; i += 4) {
+                        const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                        const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.35 + 128));
+                        d[i] = d[i + 1] = d[i + 2] = contrasted;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
+                    canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', 0.85);
+                };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem inválida')); };
+                img.src = url;
+            });
+        }
+
+        let ocrWorker = null;
+        async function getOcrWorker(statusEl) {
+            if (ocrWorker) return ocrWorker;
+            const Tesseract = await loadTesseract();
+            ocrWorker = await Tesseract.createWorker('por', 1, {
+                logger: m => {
+                    if (m.status === 'recognizing text' && statusEl) {
+                        const pct = Math.round((m.progress || 0) * 100);
+                        statusEl.innerText = `⏳ Lendo a folha... ${pct}%`;
+                    }
+                }
+            });
+            return ocrWorker;
         }
 
         async function handleSheetPhoto(event) {
@@ -1462,18 +1509,13 @@
             const btn = document.getElementById('btnScanSheet');
             btn.disabled = true;
             statusEl.style.color = '#4338ca';
-            statusEl.innerText = '⏳ Carregando leitor de folha...';
+            statusEl.innerText = '⏳ Preparando imagem...';
 
             try {
-                const Tesseract = await loadTesseract();
-                const result = await Tesseract.recognize(file, 'por', {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const pct = Math.round((m.progress || 0) * 100);
-                            statusEl.innerText = `⏳ Lendo a folha... ${pct}%`;
-                        }
-                    }
-                });
+                const processedBlob = await preprocessImageForOCR(file);
+                statusEl.innerText = '⏳ Lendo a folha...';
+                const worker = await getOcrWorker(statusEl);
+                const result = await worker.recognize(processedBlob);
 
                 const data = parseSheetText(result.data.text || '');
                 const now = new Date();
