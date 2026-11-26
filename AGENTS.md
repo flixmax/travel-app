@@ -84,6 +84,10 @@ Todas estão na função `calcTrip()`.
 - No celular (até 480px ou instalado) o app ocupa a tela inteira, sem a moldura de "celular" que
   aparece no computador. Respeita as áreas seguras (`env(safe-area-inset-*)`).
 - Campos com 16px (abaixo disso o iPhone dá zoom) e alvos de toque com pelo menos 40–44px (`--tap`).
+- A cor da barra de navegação do Android vem do `theme_color` do `manifest.json` (`#0F172A`), que é
+  a mesma do fim do degradê da barra do app (`navGrad`). Mudou uma, mude a outra. O Android grava essa
+  cor quando o app é instalado: troca no manifest só aparece quando o Chrome atualiza o app instalado
+  (pode levar até 1 dia) ou quando o app é reinstalado.
 - Nas listas, os valores ficam alinhados à direita. As linhas sem botão "×" usam `.del-spacer`
   (32px) para ocupar o mesmo espaço do "×" (40px de área de toque com margem negativa de 8px).
 - O usuário confere o resultado no celular e se incomoda com detalhes visuais fora do padrão.
