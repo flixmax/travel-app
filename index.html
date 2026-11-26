@@ -219,6 +219,11 @@
             font-weight: 600;
             color: #166534;
         }
+        .deposit-summary.negative {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
         .placar-box {
             background: #e0e7ff;
             border: 1px solid #c7d2fe;
@@ -375,6 +380,20 @@
             color: #b91c1c;
             opacity: 0.85;
             margin-top: 4px;
+        }
+        .expenses-summary .remaining-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #fca5a5;
+            color: #166534;
+        }
+        .expenses-summary .remaining-line.negative {
+            color: #dc2626;
         }
         .type-toggle {
             display: flex;
@@ -552,10 +571,10 @@
             </div>
 
             <div class="app-content">
-                <!-- Total Já Depositado no Topo da Tela -->
-                <div class="deposit-summary">
-                    <span>Total Já Depositado:</span>
-                    <span id="det-deposited" style="font-size: 1rem;">R$ 0,00</span>
+                <!-- Restante do Depositado no Topo da Tela -->
+                <div id="deposit-summary-box" class="deposit-summary">
+                    <span>Restante do Depositado:</span>
+                    <span id="det-remaining-deposited" style="font-size: 1rem;">R$ 0,00</span>
                 </div>
 
                 <!-- Bloco 1: Entradas / Folha -->
@@ -563,6 +582,10 @@
                     <div class="card-section-header">
                         <h3>1. Folha da Viagem (Entradas)</h3>
                         <button type="button" class="btn-edit-inline" onclick="openTripModal(currentTripId)">✏️ Editar</button>
+                    </div>
+                    <div class="expense-item" style="border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #166534;">
+                        <span>Total Já Depositado</span>
+                        <span class="expense-amount"><span id="det-deposited">R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Adiantamento</span>
@@ -574,7 +597,7 @@
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Passagem rodoviária</span>
-                        <span class="expense-amount"><span id="det-bus-ticket" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-bus-ticket" style="font-weight: 600; color: #4b5563;">R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div id="extra-incomes-list">
                         <!-- Entradas extras (diárias, depósitos) -->
@@ -631,6 +654,13 @@
                         <span id="det-balance" style="font-size: 1.2rem; color: #047857;">R$ 0,00</span>
                     </div>
                     <div id="det-balance-formula" style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 4px;">Saldo + Bônus sem ocorrência</div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #a5b4fc;">
+                        <div class="placar-row">
+                            <span>Lucro Líquido da Viagem:</span>
+                            <span id="det-net-profit" style="font-size: 1.15rem; color: #047857;">R$ 0,00</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 2px;">Acerto a Receber + Restante do Depositado</div>
+                    </div>
                 </div>
 
                 <!-- Ações da viagem -->
@@ -844,16 +874,22 @@
             const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable'));
             const busTicketSpent = sum(trip.expenses.filter(e => e.type === 'reimbursable' && isBusTicket(e.title)));
             const busTicketExcess = Math.max(0, busTicketSpent - busTicket);
+            const deposited = (trip.advance || 0) + (trip.toll || 0) + extraIncomes;
+            const totalExpenses = reimbursable + personal;
+            const remainingDeposited = deposited - totalExpenses;
+            const settlement = (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess;
             return {
                 extraIncomes,
                 busTicket,
                 busTicketSpent,
                 busTicketExcess,
-                deposited: (trip.advance || 0) + (trip.toll || 0) + busTicket + extraIncomes,
+                deposited,
                 reimbursable,
                 personal,
-                totalExpenses: reimbursable + personal,
-                settlement: (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess
+                totalExpenses,
+                remainingDeposited,
+                settlement,
+                netProfit: settlement + remainingDeposited
             };
         }
 
@@ -913,6 +949,14 @@
                             <span>Total de Gastos:</span>
                             <span>- ${formatMoney(c.totalExpenses)}</span>
                         </div>
+                        <div class="detail-row" style="font-weight: 600; color: ${c.remainingDeposited < 0 ? '#dc2626' : '#166534'};">
+                            <span>Restante do Depositado:</span>
+                            <span>${formatMoney(c.remainingDeposited)}</span>
+                        </div>
+                        <div class="detail-row" style="font-weight: 600; color: ${c.netProfit < 0 ? '#dc2626' : '#047857'};">
+                            <span>Lucro Líquido:</span>
+                            <span>${formatMoney(c.netProfit)}</span>
+                        </div>
                         <div class="detail-row highlight">
                             <span>${c.busTicketExcess > 0 ? 'Acerto (Saldo + Bônus + Passagem):' : 'Acerto (Saldo + Bônus):'}</span>
                             <span style="color: #059669;">${formatMoney(c.settlement)}</span>
@@ -937,7 +981,7 @@
 
             document.getElementById('det-advance').innerText = '+ ' + formatMoney(trip.advance || 0);
             document.getElementById('det-toll').innerText = '+ ' + formatMoney(trip.toll || 0);
-            document.getElementById('det-bus-ticket').innerText = '+ ' + formatMoney(trip.busTicket || 0);
+            document.getElementById('det-bus-ticket').innerText = formatMoney(trip.busTicket || 0);
             document.getElementById('det-bonus').innerText = '+ ' + formatMoney(trip.bonus || 0);
             document.getElementById('det-remainder').innerText = '+ ' + formatMoney(trip.remainder || 0);
 
@@ -980,16 +1024,21 @@
                 personalList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal registrado.</div>';
             }
 
-            // Total de gastos (abaixo dos gastos pessoais)
+            // Total de gastos
             document.getElementById('det-total-expenses').innerText = formatMoney(c.totalExpenses);
             document.getElementById('det-total-reimb').innerText = formatMoney(c.reimbursable);
             document.getElementById('det-total-personal').innerText = formatMoney(c.personal);
+            document.getElementById('det-remaining-deposited').innerText = formatMoney(c.remainingDeposited);
+            document.getElementById('deposit-summary-box').classList.toggle('negative', c.remainingDeposited < 0);
 
             // Acerto = Saldo + Bônus sem ocorrência (+ excedente da passagem rodoviária, se houver)
             document.getElementById('det-balance').innerText = formatMoney(c.settlement);
             document.getElementById('det-balance-formula').innerText = c.busTicketExcess > 0
                 ? `Saldo + Bônus sem ocorrência + Excedente de passagem (${formatMoney(c.busTicketExcess)})`
                 : 'Saldo + Bônus sem ocorrência';
+            const netEl = document.getElementById('det-net-profit');
+            netEl.innerText = formatMoney(c.netProfit);
+            netEl.style.color = c.netProfit < 0 ? '#dc2626' : '#047857';
 
             const paidBtn = document.getElementById('btn-toggle-paid');
             if (trip.status === STATUS_PAID) {
