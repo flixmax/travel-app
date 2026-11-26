@@ -173,6 +173,28 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        .card-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-section-header h3 {
+            margin-bottom: 0;
+        }
+        .btn-edit-inline {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-edit-inline:hover {
+            background: #e0e7ff;
+        }
         .expense-item {
             display: flex;
             justify-content: space-between;
@@ -538,30 +560,34 @@
 
                 <!-- Bloco 1: Entradas / Folha -->
                 <div class="card-section">
-                    <h3>1. Folha da Viagem (Entradas)</h3>
-                    <div class="expense-item">
+                    <div class="card-section-header">
+                        <h3>1. Folha da Viagem (Entradas)</h3>
+                        <button type="button" class="btn-edit-inline" onclick="openTripModal(currentTripId)">✏️ Editar</button>
+                    </div>
+                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Adiantamento</span>
                         <span class="expense-amount"><span id="det-advance" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
-                    <div class="expense-item">
+                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Pedágio</span>
                         <span class="expense-amount"><span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
-                    <div class="expense-item">
+                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Passagem rodoviária</span>
                         <span class="expense-amount"><span id="det-bus-ticket" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div id="extra-incomes-list">
                         <!-- Entradas extras (diárias, depósitos) -->
                     </div>
-                    <div class="expense-item">
+                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Bônus sem ocorrência</span>
                         <span class="expense-amount"><span id="det-bonus" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
-                    <div class="expense-item" style="margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px;">
+                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar" style="margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px;">
                         <span>Saldo</span>
                         <span class="expense-amount"><span id="det-remainder" style="font-weight: 600; color: #2563eb;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
+                    <div class="tap-hint">Toque em um valor fixo ou em Editar para alterar a folha.</div>
                 </div>
 
                 <!-- Bloco 2: Gastos Reembolsáveis (pagos pela empresa) -->
@@ -625,12 +651,12 @@
         </div>
 
 
-        <!-- MODAL: NOVA VIAGEM -->
+        <!-- MODAL: NOVA / EDITAR VIAGEM -->
         <div id="tripModal" class="modal">
             <div class="modal-card">
-                <h3>Nova Viagem</h3>
-                <p>Preencha os dados da folha da viagem.</p>
-                <form id="tripForm" onsubmit="saveNewTrip(event)">
+                <h3 id="tripModalTitle">Nova Viagem</h3>
+                <p id="tripModalSub">Preencha os dados da folha da viagem.</p>
+                <form id="tripForm" onsubmit="saveTrip(event)">
                     <div class="form-group">
                         <label>Destino</label>
                         <input type="text" id="tripDest" placeholder="Ex: Campinas - SP" required>
@@ -661,7 +687,7 @@
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeTripModal()">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Viagem</button>
+                        <button type="submit" id="tripSubmitBtn" class="btn btn-primary">Salvar Viagem</button>
                     </div>
                 </form>
             </div>
@@ -767,6 +793,7 @@
         });
 
         let currentTripId = null;
+        let editingTripId = null;         // null = nova viagem; id = editando folha existente
         let editingExpenseIndex = null;   // null = novo gasto; número = editando gasto existente
         let expenseTypeTouched = false;   // usuário escolheu o tipo manualmente?
 
@@ -1153,23 +1180,65 @@
             renderTrips();
         }
 
-        function openTripModal() {
+        function openTripModal(tripId = null) {
+            const form = document.getElementById('tripForm');
+            form.reset();
+            editingTripId = null;
+
+            const trip = tripId !== null ? trips.find(t => t.id === tripId) : null;
+            if (trip) {
+                editingTripId = trip.id;
+                document.getElementById('tripModalTitle').innerText = 'Editar Folha da Viagem';
+                document.getElementById('tripModalSub').innerText = 'Altere os dados ou valores da viagem.';
+                document.getElementById('tripSubmitBtn').innerText = 'Salvar Alterações';
+                document.getElementById('tripDest').value = trip.destination || '';
+                document.getElementById('tripDate').value = trip.date || '';
+                document.getElementById('tripAdvance').value = trip.advance ?? 0;
+                document.getElementById('tripToll').value = trip.toll ?? 0;
+                document.getElementById('tripBusTicket').value = trip.busTicket ?? 0;
+                document.getElementById('tripBonus').value = trip.bonus ?? 0;
+                document.getElementById('tripRemainder').value = trip.remainder ?? 0;
+            } else {
+                document.getElementById('tripModalTitle').innerText = 'Nova Viagem';
+                document.getElementById('tripModalSub').innerText = 'Preencha os dados da folha da viagem.';
+                document.getElementById('tripSubmitBtn').innerText = 'Salvar Viagem';
+            }
+
             document.getElementById('tripModal').classList.add('active');
         }
 
         function closeTripModal() {
             document.getElementById('tripModal').classList.remove('active');
+            document.getElementById('tripForm').reset();
+            editingTripId = null;
         }
 
-        function saveNewTrip(e) {
+        function saveTrip(e) {
             e.preventDefault();
-            const dest = document.getElementById('tripDest').value;
-            const date = document.getElementById('tripDate').value;
+            const dest = document.getElementById('tripDest').value.trim();
+            const date = document.getElementById('tripDate').value.trim();
             const adv = parseFloat(document.getElementById('tripAdvance').value) || 0;
             const toll = parseFloat(document.getElementById('tripToll').value) || 0;
             const busTicket = parseFloat(document.getElementById('tripBusTicket').value) || 0;
             const bonus = parseFloat(document.getElementById('tripBonus').value) || 0;
             const remainder = parseFloat(document.getElementById('tripRemainder').value) || 0;
+
+            if (editingTripId !== null) {
+                const trip = trips.find(t => t.id === editingTripId);
+                if (trip) {
+                    trip.destination = dest;
+                    trip.date = date;
+                    trip.advance = adv;
+                    trip.toll = toll;
+                    trip.busTicket = busTicket;
+                    trip.bonus = bonus;
+                    trip.remainder = remainder;
+                    saveToStorage();
+                    closeTripModal();
+                    openDetail(trip.id);
+                    return;
+                }
+            }
 
             const newTrip = {
                 id: Date.now(),
@@ -1188,7 +1257,6 @@
             trips.push(newTrip);
             saveToStorage();
             closeTripModal();
-            document.getElementById('tripForm').reset();
         }
 
         // ---------- Reconhecimento de Voz ----------
