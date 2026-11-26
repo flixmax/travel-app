@@ -36,6 +36,7 @@ Formato de uma viagem:
   busTicket,  // Passagem rodoviária depositada
   bonus,      // Bônus sem ocorrência
   remainder,  // Saldo
+  freightNet, // Frete contratado líquido (para NFS-e)
   incomes:  [{ title, amount }],                                   // entradas extras (diárias, depósitos)
   expenses: [{ title, amount, type: "reimbursable" | "personal" }]
 }

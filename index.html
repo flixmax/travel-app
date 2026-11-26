@@ -688,6 +688,12 @@
                         </div>
                         <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 2px;">Acerto a Receber + Restante do Depositado + Reembolsáveis</div>
                     </div>
+                    <div onclick="openTripModal(currentTripId)" title="Toque para editar" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #a5b4fc; cursor: pointer;">
+                        <div class="placar-row">
+                            <span>Frete Contratado Líquido (NFS-e):</span>
+                            <span id="det-freight-net" style="font-size: 1.05rem; color: #1e40af;">R$ 0,00</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Ações da viagem -->
@@ -746,6 +752,10 @@
                     <div class="form-group">
                         <label>Saldo (R$)</label>
                         <input type="number" step="0.01" id="tripRemainder" placeholder="450.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Frete Contratado Líquido — NFS-e (R$)</label>
+                        <input type="number" step="0.01" min="0" id="tripFreightNet" placeholder="0.00">
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeTripModal()">Cancelar</button>
@@ -837,6 +847,7 @@
                 toll: 200,
                 busTicket: 0,
                 bonus: 300,
+                freightNet: 0,
                 incomes: [],
                 expenses: [
                     { title: "Uber Hotel", amount: 35, type: "reimbursable" },
@@ -850,6 +861,7 @@
         // Viagens salvas em versões antigas não tinham entradas extras ou passagem rodoviária
         trips.forEach(t => {
             t.busTicket = t.busTicket || 0;
+            t.freightNet = t.freightNet || 0;
             t.incomes = t.incomes || [];
             t.expenses = t.expenses || [];
         });
@@ -1080,6 +1092,7 @@
             const netEl = document.getElementById('det-net-profit');
             netEl.innerText = formatMoney(c.netProfit);
             netEl.style.color = c.netProfit < 0 ? '#dc2626' : '#047857';
+            document.getElementById('det-freight-net').innerText = formatMoney(trip.freightNet || 0);
 
             const paidBtn = document.getElementById('btn-toggle-paid');
             if (trip.status === STATUS_PAID) {
@@ -1294,6 +1307,7 @@
                 document.getElementById('tripBusTicket').value = trip.busTicket ?? 0;
                 document.getElementById('tripBonus').value = trip.bonus ?? 0;
                 document.getElementById('tripRemainder').value = trip.remainder ?? 0;
+                document.getElementById('tripFreightNet').value = trip.freightNet ?? 0;
             } else {
                 document.getElementById('tripModalTitle').innerText = 'Nova Viagem';
                 document.getElementById('tripModalSub').innerText = 'Preencha os dados da folha da viagem.';
@@ -1318,6 +1332,7 @@
             const busTicket = parseFloat(document.getElementById('tripBusTicket').value) || 0;
             const bonus = parseFloat(document.getElementById('tripBonus').value) || 0;
             const remainder = parseFloat(document.getElementById('tripRemainder').value) || 0;
+            const freightNet = parseFloat(document.getElementById('tripFreightNet').value) || 0;
 
             if (editingTripId !== null) {
                 const trip = trips.find(t => t.id === editingTripId);
@@ -1329,6 +1344,7 @@
                     trip.busTicket = busTicket;
                     trip.bonus = bonus;
                     trip.remainder = remainder;
+                    trip.freightNet = freightNet;
                     saveToStorage();
                     closeTripModal();
                     openDetail(trip.id);
@@ -1346,6 +1362,7 @@
                 toll: toll,
                 busTicket: busTicket,
                 bonus: bonus,
+                freightNet: freightNet,
                 incomes: [],
                 expenses: []
             };
@@ -1401,11 +1418,18 @@
             const dateMatch = text.match(/(\d{2}\/\d{2}\/\d{2,4})/);
             let destination = null;
             for (let i = 0; i < lines.length; i++) {
-                // Formato típico da folha: "Curitiba x Pouso Alegre"
-                const routeMatch = lines[i].match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.-]{1,30}\s+[xX]\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.-]{1,30})/);
+                // Formato típico da folha: "CURITIBA x POUSO ALEGRE - KM 690"
+                const cleanLine = lines[i].replace(/[|[\]{}_]/g, ' ').replace(/\s+/g, ' ').trim();
+                if (/km\s*x\s*r\$/.test(normalize(cleanLine))) continue;
+                const routeMatch = cleanLine.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,30}?)\s+[xX×]\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,30})/);
                 if (routeMatch) {
-                    destination = routeMatch[1].replace(/\s+[xX]\s+/, ' x ').trim();
-                    break;
+                    const from = routeMatch[1].trim();
+                    const to = routeMatch[2].replace(/\s*-\s*km.*$/i, '').trim();
+                    if (from.length >= 2 && to.length >= 2 && normalize(from) !== 'km') {
+                        const toTitle = s => s.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
+                        destination = `${toTitle(from)} x ${toTitle(to)}`;
+                        break;
+                    }
                 }
             }
             if (!destination) {
@@ -1424,9 +1448,10 @@
                 date: dateMatch ? dateMatch[1] : null,
                 advance: extractMoneyNear(lines, normLines, /(adiantamento|adiant\.?)/),
                 toll: extractMoneyNear(lines, normLines, /pedagio/),
-                busTicket: extractMoneyNear(lines, normLines, /(passagem|rodoviaria)/),
-                bonus: extractMoneyNear(lines, normLines, /(bonus|premiacao|programa\s+de\s+bonificacao|bonificacao)/),
-                remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/)
+                busTicket: extractMoneyNear(lines, normLines, /(passagem\s+rodoviaria|rodoviaria)/),
+                bonus: extractMoneyNear(lines, normLines, /(programa\s+de\s+bonificacao|bonificacao|bonus|premiacao)/),
+                remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/),
+                freightNet: extractMoneyNear(lines, normLines, /(frete\s+contratado\s+liquido|frete\s+liquido|frete\s+contratado)/)
             };
         }
 
@@ -1461,6 +1486,7 @@
                 if (data.busTicket !== null) { document.getElementById('tripBusTicket').value = data.busTicket.toFixed(2); filled++; }
                 if (data.bonus !== null) { document.getElementById('tripBonus').value = data.bonus.toFixed(2); filled++; }
                 if (data.remainder !== null) { document.getElementById('tripRemainder').value = data.remainder.toFixed(2); filled++; }
+                if (data.freightNet !== null) { document.getElementById('tripFreightNet').value = data.freightNet.toFixed(2); filled++; }
 
                 if (filled > 0) {
                     statusEl.style.color = '#059669';
