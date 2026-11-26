@@ -547,6 +547,10 @@
                         <span>Pedágio</span>
                         <span class="expense-amount"><span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
+                    <div class="expense-item">
+                        <span>Passagem rodoviária</span>
+                        <span class="expense-amount"><span id="det-bus-ticket" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                    </div>
                     <div id="extra-incomes-list">
                         <!-- Entradas extras (diárias, depósitos) -->
                     </div>
@@ -600,7 +604,7 @@
                         <span>Acerto a Receber:</span>
                         <span id="det-balance" style="font-size: 1.2rem; color: #047857;">R$ 0,00</span>
                     </div>
-                    <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 4px;">Saldo + Bônus sem ocorrência</div>
+                    <div id="det-balance-formula" style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 4px;">Saldo + Bônus sem ocorrência</div>
                 </div>
 
                 <!-- Ações da viagem -->
@@ -644,6 +648,10 @@
                         <input type="number" step="0.01" id="tripToll" placeholder="200.00" required>
                     </div>
                     <div class="form-group">
+                        <label>Passagem Rodoviária (R$)</label>
+                        <input type="number" step="0.01" min="0" id="tripBusTicket" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
                         <label>Bônus Previsto (R$)</label>
                         <input type="number" step="0.01" id="tripBonus" placeholder="300.00" required>
                     </div>
@@ -668,7 +676,7 @@
                 <form id="expenseForm" onsubmit="saveExpense(event)">
                     <div class="form-group">
                         <label>Descrição</label>
-                        <input type="text" id="expTitle" placeholder="Ex: Uber, Almoço, Hotel, Pedágio" oninput="onExpenseTitleChange()" required>
+                        <input type="text" id="expTitle" placeholder="Ex: Uber, Almoço, Hotel, Passagem" oninput="onExpenseTitleChange()" required>
                     </div>
                     <div class="form-group">
                         <label>Valor (R$)</label>
@@ -739,6 +747,7 @@
                 advance: 1050,
                 remainder: 450,
                 toll: 200,
+                busTicket: 0,
                 bonus: 300,
                 incomes: [],
                 expenses: [
@@ -750,8 +759,9 @@
             }
         ];
 
-        // Viagens salvas em versões antigas não tinham a lista de entradas extras
+        // Viagens salvas em versões antigas não tinham entradas extras ou passagem rodoviária
         trips.forEach(t => {
+            t.busTicket = t.busTicket || 0;
             t.incomes = t.incomes || [];
             t.expenses = t.expenses || [];
         });
@@ -786,7 +796,8 @@
         // Padroniza descrições: corrige acentos comuns e começa com letra maiúscula ("diaria" -> "Diária")
         const COMMON_WORDS = {
             diaria: 'diária', diarias: 'diárias', pedagio: 'pedágio', almoco: 'almoço',
-            cafe: 'café', refeicao: 'refeição', taxi: 'táxi', deposito: 'depósito', peca: 'peça'
+            cafe: 'café', refeicao: 'refeição', taxi: 'táxi', deposito: 'depósito', peca: 'peça',
+            rodoviaria: 'rodoviária', onibus: 'ônibus'
         };
         function tidyTitle(title) {
             const fixed = String(title).trim().replace(/\s+/g, ' ')
@@ -801,22 +812,34 @@
         // Todos os totais de uma viagem num só lugar
         function calcTrip(trip) {
             const extraIncomes = sum(trip.incomes);
+            const busTicket = trip.busTicket || 0;
             const reimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable'));
             const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable'));
+            const busTicketSpent = sum(trip.expenses.filter(e => e.type === 'reimbursable' && isBusTicket(e.title)));
+            const busTicketExcess = Math.max(0, busTicketSpent - busTicket);
             return {
                 extraIncomes,
-                deposited: (trip.advance || 0) + (trip.toll || 0) + extraIncomes,
+                busTicket,
+                busTicketSpent,
+                busTicketExcess,
+                deposited: (trip.advance || 0) + (trip.toll || 0) + busTicket + extraIncomes,
                 reimbursable,
                 personal,
                 totalExpenses: reimbursable + personal,
-                settlement: (trip.remainder || 0) + (trip.bonus || 0)   // Acerto = Saldo + Bônus
+                settlement: (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess
             };
         }
 
         // ---------- Regras de tipo de gasto ----------
-        // Pedágio é SEMPRE reembolsável.
+        // Pedágio e passagem rodoviária são SEMPRE pagos pela empresa.
         function isToll(title) {
             return /pedagio/.test(normalize(title));
+        }
+        function isBusTicket(title) {
+            return /(passagem|onibus)/.test(normalize(title));
+        }
+        function isCompanyOnly(title) {
+            return isToll(title) || isBusTicket(title);
         }
         // Gastos que às vezes são da empresa, às vezes por minha conta: o app pergunta.
         function isAmbiguous(title) {
@@ -825,7 +848,7 @@
         // Sugestão inicial de tipo pela descrição
         function suggestType(title) {
             const t = normalize(title);
-            if (isToll(t)) return 'reimbursable';
+            if (isCompanyOnly(t)) return 'reimbursable';
             if (/(almoco|janta|jantar|cafe|lanche|refeicao|marmita|agua|refrigerante|sorvete)/.test(t)) return 'personal';
             if (/(uber|taxi|99|hotel|hospedagem|pousada|peca|conserto|oficina|borracharia|combustivel|diesel|lavagem|estacionamento)/.test(t)) return 'reimbursable';
             return null;
@@ -864,7 +887,7 @@
                             <span>- ${formatMoney(c.totalExpenses)}</span>
                         </div>
                         <div class="detail-row highlight">
-                            <span>Acerto (Saldo + Bônus):</span>
+                            <span>${c.busTicketExcess > 0 ? 'Acerto (Saldo + Bônus + Passagem):' : 'Acerto (Saldo + Bônus):'}</span>
                             <span style="color: #059669;">${formatMoney(c.settlement)}</span>
                         </div>
                     </div>
@@ -887,6 +910,7 @@
 
             document.getElementById('det-advance').innerText = '+ ' + formatMoney(trip.advance || 0);
             document.getElementById('det-toll').innerText = '+ ' + formatMoney(trip.toll || 0);
+            document.getElementById('det-bus-ticket').innerText = '+ ' + formatMoney(trip.busTicket || 0);
             document.getElementById('det-bonus').innerText = '+ ' + formatMoney(trip.bonus || 0);
             document.getElementById('det-remainder').innerText = '+ ' + formatMoney(trip.remainder || 0);
 
@@ -934,8 +958,11 @@
             document.getElementById('det-total-reimb').innerText = formatMoney(c.reimbursable);
             document.getElementById('det-total-personal').innerText = formatMoney(c.personal);
 
-            // Acerto = Saldo + Bônus sem ocorrência
+            // Acerto = Saldo + Bônus sem ocorrência (+ excedente da passagem rodoviária, se houver)
             document.getElementById('det-balance').innerText = formatMoney(c.settlement);
+            document.getElementById('det-balance-formula').innerText = c.busTicketExcess > 0
+                ? `Saldo + Bônus sem ocorrência + Excedente de passagem (${formatMoney(c.busTicketExcess)})`
+                : 'Saldo + Bônus sem ocorrência';
 
             const paidBtn = document.getElementById('btn-toggle-paid');
             if (trip.status === STATUS_PAID) {
@@ -980,7 +1007,7 @@
 
         function selectExpenseType(type, byUser) {
             const title = document.getElementById('expTitle').value;
-            if (isToll(title)) type = 'reimbursable';   // pedágio nunca vira pessoal
+            if (isCompanyOnly(title)) type = 'reimbursable';   // pedágio e passagem nunca viram pessoal
             if (byUser) expenseTypeTouched = true;
             document.getElementById('expType').value = type;
             document.querySelectorAll('.type-option').forEach(btn => {
@@ -993,10 +1020,12 @@
             const hint = document.getElementById('expTypeHint');
             const personalBtn = document.querySelector('.type-option[data-type="personal"]');
 
-            if (isToll(title)) {
+            if (isCompanyOnly(title)) {
                 personalBtn.disabled = true;
                 selectExpenseType('reimbursable');
-                hint.innerText = '🔒 Pedágio é sempre reembolsável.';
+                hint.innerText = isToll(title)
+                    ? '🔒 Pedágio é sempre reembolsável.'
+                    : '🔒 Passagem rodoviária é paga pela empresa (reembolsa só o que passar do depositado).';
                 return;
             }
             personalBtn.disabled = false;
@@ -1064,7 +1093,7 @@
             const amount = parseFloat(document.getElementById('expAmount').value);
             let type = document.getElementById('expType').value;
             if (!title || !(amount > 0)) return;
-            if (isToll(title)) type = 'reimbursable';
+            if (isCompanyOnly(title)) type = 'reimbursable';
 
             const expense = { title: tidyTitle(title), amount: amount, type: type };
             if (editingExpenseIndex !== null && trip.expenses[editingExpenseIndex]) {
@@ -1138,6 +1167,7 @@
             const date = document.getElementById('tripDate').value;
             const adv = parseFloat(document.getElementById('tripAdvance').value) || 0;
             const toll = parseFloat(document.getElementById('tripToll').value) || 0;
+            const busTicket = parseFloat(document.getElementById('tripBusTicket').value) || 0;
             const bonus = parseFloat(document.getElementById('tripBonus').value) || 0;
             const remainder = parseFloat(document.getElementById('tripRemainder').value) || 0;
 
@@ -1149,6 +1179,7 @@
                 advance: adv,
                 remainder: remainder,
                 toll: toll,
+                busTicket: busTicket,
                 bonus: bonus,
                 incomes: [],
                 expenses: []
