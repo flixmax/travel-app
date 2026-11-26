@@ -1455,7 +1455,7 @@
                 destination,
                 date: dateMatch ? dateMatch[1] : null,
                 advance: extractMoneyNear(lines, normLines, /(adiantamento|adiant\.?)/),
-                toll: extractMoneyNear(lines, normLines, /(pedagio|ped[aá]g[il]o|pago\s*\(\+\))/),
+                toll: extractMoneyNear(lines, normLines, /(pedagio|ped[aá]g[il]o)/),
                 busTicket: extractMoneyNear(lines, normLines, /(passagem\s+rodoviaria|rodoviaria)/),
                 bonus: extractMoneyNear(lines, normLines, /(programa\s+de\s+bonificacao|bonificacao|bonus|premiacao)/),
                 remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/),
@@ -1505,8 +1505,6 @@
                     }
                 }
             });
-            // PSM 6 lê linha por linha da esquerda para a direita sem quebrar colunas da tabela
-            await ocrWorker.setParameters({ tessedit_pageseg_mode: '6' });
             return ocrWorker;
         }
 
