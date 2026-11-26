@@ -1423,10 +1423,10 @@
                 // Formato típico da folha: "CURITIBA x POUSO ALEGRE - KM 690"
                 const cleanLine = lines[i].replace(/[|[\]{}_]/g, ' ').replace(/\s+/g, ' ').trim();
                 if (/km\s*x\s*r\$/.test(normalize(cleanLine))) continue;
-                const routeMatch = cleanLine.match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,35})\s+[xX×]\s+([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.]{1,35})/);
-                if (routeMatch) {
-                    const from = routeMatch[1].trim();
-                    const to = routeMatch[2].replace(/\s*-\s*km.*$/i, '').trim();
+                const xParts = cleanLine.split(/\s+[xX×]\s+/);
+                if (xParts.length === 2) {
+                    const from = xParts[0].replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zÀ-ÿ\s.-]+$/g, '').trim();
+                    const to = xParts[1].replace(/\s*-\s*km.*$/i, '').replace(/[^A-Za-zÀ-ÿ\s.-]+$/g, '').trim();
                     if (from.length >= 2 && to.length >= 2 && normalize(from) !== 'km') {
                         const toTitle = s => s.toLowerCase().replace(/(?:^|\s)\S/g, c => c.toUpperCase());
                         destination = `${toTitle(from)} x ${toTitle(to)}`;
@@ -1476,8 +1476,8 @@
                     const d = imgData.data;
                     for (let i = 0; i < d.length; i += 4) {
                         const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-                        const contrasted = Math.min(255, Math.max(0, (gray - 128) * 1.35 + 128));
-                        d[i] = d[i + 1] = d[i + 2] = contrasted;
+                        const brightened = Math.min(255, gray * 1.12);
+                        d[i] = d[i + 1] = d[i + 2] = brightened;
                     }
                     ctx.putImageData(imgData, 0, 0);
                     canvas.toBlob(blob => resolve(blob || file), 'image/jpeg', 0.85);
