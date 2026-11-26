@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Controle de Viagens e Reembolsos</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0F172A">
@@ -12,6 +12,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Painel escuro de uso no celular, uma coluna, números alinhados à direita.
+           Todas as cores vêm daqui: não escreva cor solta no HTML ou no JS, use as classes .amount.* */
+        :root {
+            color-scheme: dark;
+            --bg: #070B14;            /* fundo fora do app (computador) */
+            --surface-0: #0F172A;     /* fundo das telas */
+            --surface-1: #1E293B;     /* cartões e modais */
+            --surface-2: #162032;     /* cartões secundários (gastos pessoais) */
+            --border: #334155;
+            --border-soft: rgba(255, 255, 255, 0.06);
+            --text: #F8FAFC;
+            --text-2: #CBD5E1;
+            --muted: #94A3B8;         /* texto secundário: contraste 5,7:1 sobre os cartões */
+            --faint: #64748B;         /* só ícones e enfeites, nunca texto */
+            --positive: #34D399;      /* entradas, lucro */
+            --negative: #FB7185;      /* gastos, saldo negativo */
+            --warning: #FBBF24;
+            --accent: #60A5FA;
+            --accent-soft: #93C5FD;
+            --accent-fill: #3B82F6;
+            --focus: #38BDF8;
+            --tap: 44px;              /* tamanho mínimo de área de toque */
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -20,18 +44,20 @@
             font-variant-numeric: tabular-nums;
         }
         body {
-            background-color: #070B14;
-            color: #F8FAFC;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            min-height: 100dvh;
             padding: 10px;
         }
+        [hidden] { display: none !important; }
         .phone-container {
             width: 100%;
             max-width: 400px;
-            background: #0F172A;
+            background: var(--surface-0);
             border-radius: 30px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
             overflow: hidden;
@@ -39,8 +65,29 @@
             flex-direction: column;
             height: 800px;
             max-height: 90vh;
-            border: 8px solid #1E293B;
+            border: 8px solid var(--surface-1);
             position: relative;
+        }
+        /* No celular (ou instalado como app) a tela inteira é o app: sem a moldura de "celular falso" */
+        @media (max-width: 480px), (display-mode: standalone) {
+            body {
+                padding: 0;
+                align-items: stretch;
+                background: var(--surface-0);
+            }
+            .phone-container {
+                max-width: none;
+                height: 100vh;
+                height: 100dvh;
+                max-height: none;
+                border: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding-top: env(safe-area-inset-top, 0px);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+                padding-left: env(safe-area-inset-left, 0px);
+                padding-right: env(safe-area-inset-right, 0px);
+            }
         }
         .screen {
             display: none;
@@ -53,24 +100,26 @@
             display: flex;
         }
         .app-header {
-            background: linear-gradient(160deg, #1E293B 0%, #0F172A 100%);
-            color: #F8FAFC;
+            background: linear-gradient(160deg, var(--surface-1) 0%, var(--surface-0) 100%);
+            color: var(--text);
             padding: 20px;
-            border-bottom: 1px solid #1E293B;
+            border-bottom: 1px solid var(--surface-1);
         }
         .app-header h1 {
             font-size: 1.15rem;
             font-weight: 600;
-            color: #F8FAFC;
+            color: var(--text);
         }
         .back-btn {
             background: none;
             border: none;
-            color: #93C5FD;
-            font-size: 0.95rem;
+            color: var(--accent-soft);
+            font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            margin-bottom: 10px;
+            min-height: var(--tap);
+            padding-right: 12px;
+            margin: -8px 0 2px;
             display: flex;
             align-items: center;
             gap: 5px;
@@ -104,13 +153,13 @@
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 12px;
-            color: #94A3B8;
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .trip-card {
-            background: #1E293B;
-            border: 1px solid #334155;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 14px;
@@ -137,17 +186,17 @@
         .trip-icon {
             width: 24px;
             height: 24px;
-            color: #64748B;
+            color: var(--faint);
             flex-shrink: 0;
         }
         .trip-title {
             font-weight: 600;
             font-size: 1rem;
-            color: #F8FAFC;
+            color: var(--text);
         }
         .trip-date {
             font-size: 0.75rem;
-            color: #94A3B8;
+            color: var(--muted);
             margin-top: 2px;
         }
         .badge {
@@ -159,7 +208,7 @@
         }
         .badge.pending {
             background: rgba(245, 158, 11, 0.18);
-            color: #FBBF24;
+            color: var(--warning);
             border: 1px solid rgba(245, 158, 11, 0.35);
         }
         .badge.paid {
@@ -167,7 +216,7 @@
             color: #FFFFFF;
         }
         .trip-details {
-            border-top: 1px solid #334155;
+            border-top: 1px solid var(--border);
             padding-top: 6px;
             margin-top: 10px;
             font-size: 0.85rem;
@@ -177,29 +226,29 @@
             justify-content: space-between;
             padding: 7px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            color: #CBD5E1;
+            color: var(--text-2);
         }
         .detail-row.highlight {
             font-weight: 700;
             font-size: 0.92rem;
-            background: #0F172A;
+            background: var(--surface-0);
             margin: 6px -16px -16px -16px;
             padding: 12px 16px;
-            border-top: 1px solid #334155;
+            border-top: 1px solid var(--border);
             border-bottom: none;
-            color: #93C5FD;
+            color: var(--accent-soft);
         }
         
         .card-section {
-            background: #1E293B;
-            border: 1px solid #334155;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
             border-radius: 14px;
             padding: 15px;
             margin-bottom: 14px;
         }
         .card-section h3 {
             font-size: 0.82rem;
-            color: #60A5FA;
+            color: var(--accent);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -215,11 +264,13 @@
         }
         .btn-edit-inline {
             background: rgba(59, 130, 246, 0.15);
-            color: #60A5FA;
+            color: var(--accent);
             border: 1px solid rgba(59, 130, 246, 0.35);
-            border-radius: 8px;
-            padding: 4px 10px;
-            font-size: 0.75rem;
+            border-radius: 10px;
+            padding: 8px 12px;
+            min-height: 40px;
+            min-width: 40px;
+            font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
         }
@@ -231,9 +282,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 0;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid var(--border);
             font-size: 0.85rem;
-            color: #E2E8F0;
+            color: var(--text-2);
         }
         .expense-item:last-child {
             border-bottom: none;
@@ -249,15 +300,15 @@
             align-items: center;
             font-size: 0.9rem;
             font-weight: 600;
-            color: #34D399;
+            color: var(--positive);
         }
         .deposit-summary.negative {
             background: rgba(244, 63, 94, 0.12);
             border-color: rgba(244, 63, 94, 0.3);
-            color: #FB7185;
+            color: var(--negative);
         }
         .placar-box {
-            background: linear-gradient(145deg, #1E293B, #172554);
+            background: linear-gradient(145deg, var(--surface-1), #172554);
             border: 1px solid #3B82F6;
             box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
             border-radius: 14px;
@@ -271,7 +322,7 @@
             gap: 10px;
             font-size: 0.95rem;
             font-weight: 700;
-            color: #F8FAFC;
+            color: var(--text);
         }
         .placar-row span:last-child {
             white-space: nowrap;
@@ -335,7 +386,7 @@
             padding: 4px 6px;
             font-size: 0.78rem;
             font-weight: 600;
-            color: #64748B;
+            color: var(--faint);
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -392,11 +443,13 @@
         .month-btn {
             background: none;
             border: none;
-            color: #F8FAFC;
-            font-size: 1.1rem;
+            color: var(--text);
+            font-size: 1.3rem;
             font-weight: 700;
             cursor: pointer;
-            padding: 2px 10px;
+            min-width: var(--tap);
+            min-height: var(--tap);
+            border-radius: 10px;
         }
         .month-label {
             font-size: 0.95rem;
@@ -405,7 +458,7 @@
 
         .btn-delete {
             background: rgba(244, 63, 94, 0.12);
-            color: #FB7185;
+            color: var(--negative);
             border: 1px solid rgba(244, 63, 94, 0.3);
             width: 100%;
             padding: 12px;
@@ -447,7 +500,7 @@
         }
         .btn-paid {
             background: rgba(16, 185, 129, 0.18);
-            color: #34D399;
+            color: var(--positive);
             border-color: rgba(16, 185, 129, 0.4);
         }
         .btn-paid:hover {
@@ -455,7 +508,7 @@
         }
         .btn-paid.undo {
             background: rgba(245, 158, 11, 0.15);
-            color: #FBBF24;
+            color: var(--warning);
             border-color: rgba(245, 158, 11, 0.35);
         }
         .expense-amount {
@@ -466,21 +519,27 @@
         .expense-del {
             background: none;
             border: none;
-            color: #64748B;
-            font-size: 1rem;
+            color: var(--muted);
+            font-size: 1.25rem;
             cursor: pointer;
             padding: 0;
-            width: 22px;
+            /* Área de toque de 40px, mas "puxada" para dentro da linha para não empurrar o layout */
+            width: 40px;
+            height: 40px;
+            margin: -8px -8px -8px 0;
+            border-radius: 10px;
             text-align: center;
             line-height: 1;
+            flex-shrink: 0;
         }
         /* Espaço do mesmo tamanho do "×" nas linhas fixas, para os valores ficarem alinhados */
         .del-spacer {
             display: inline-block;
-            width: 22px;
+            width: 32px;
+            flex-shrink: 0;
         }
         .expense-del:hover {
-            color: #FB7185;
+            color: var(--negative);
         }
         .expense-item.clickable {
             cursor: pointer;
@@ -489,13 +548,13 @@
             background: rgba(255, 255, 255, 0.04);
         }
         .tap-hint {
-            font-size: 0.72rem;
-            color: #64748B;
+            font-size: 0.8rem;
+            color: var(--muted);
             margin-top: 6px;
         }
         .btn-add-income {
             background: rgba(16, 185, 129, 0.15);
-            color: #34D399;
+            color: var(--positive);
             border-color: rgba(16, 185, 129, 0.35);
         }
         .btn-add-income:hover {
@@ -533,10 +592,10 @@
             margin-top: 8px;
             padding-top: 8px;
             border-top: 1px dashed rgba(244, 63, 94, 0.3);
-            color: #34D399;
+            color: var(--positive);
         }
         .expenses-summary .remaining-line.negative {
-            color: #FB7185;
+            color: var(--negative);
         }
         .type-toggle {
             display: flex;
@@ -545,19 +604,19 @@
         .type-option {
             flex: 1;
             padding: 10px 6px;
-            border: 2px solid #334155;
-            background: #0F172A;
+            border: 2px solid var(--border);
+            background: var(--surface-0);
             border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #CBD5E1;
+            color: var(--text-2);
             cursor: pointer;
             line-height: 1.3;
         }
         .type-option small {
             font-weight: 400;
             font-size: 0.72rem;
-            color: #94A3B8;
+            color: var(--muted);
         }
         .type-option.selected[data-type="reimbursable"] {
             border-color: #6366F1;
@@ -565,7 +624,7 @@
             color: #A5B4FC;
         }
         .type-option.selected[data-type="personal"] {
-            border-color: #94A3B8;
+            border-color: var(--muted);
             background: rgba(100, 116, 139, 0.25);
             color: #F1F5F9;
         }
@@ -575,7 +634,7 @@
         }
         .type-hint {
             font-size: 0.75rem;
-            color: #FBBF24;
+            color: var(--warning);
             margin-top: 6px;
             min-height: 1em;
         }
@@ -586,7 +645,7 @@
             border-radius: 10px;
             border: 1px dashed #3B82F6;
             background: rgba(59, 130, 246, 0.12);
-            color: #60A5FA;
+            color: var(--accent);
             font-size: 0.88rem;
             font-weight: 600;
             cursor: pointer;
@@ -601,7 +660,7 @@
         }
         .ocr-status {
             font-size: 0.78rem;
-            color: #94A3B8;
+            color: var(--muted);
             text-align: center;
             margin-bottom: 10px;
             min-height: 1em;
@@ -611,7 +670,7 @@
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
-            background: #070B14;
+            background: var(--bg);
             margin-bottom: 12px;
         }
         .scanner-viewport video {
@@ -661,8 +720,8 @@
             display: flex;
         }
         .modal-card {
-            background: #1E293B;
-            border: 1px solid #334155;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
             width: 100%;
             max-width: 340px;
             border-radius: 20px;
@@ -675,7 +734,7 @@
             width: 70px;
             height: 70px;
             background: rgba(244, 63, 94, 0.15);
-            color: #FB7185;
+            color: var(--negative);
             border-radius: 35px;
             display: flex;
             justify-content: center;
@@ -691,13 +750,13 @@
         }
         .modal-card h3 {
             font-size: 1.1rem;
-            color: #F8FAFC;
+            color: var(--text);
             margin-bottom: 5px;
             text-align: center;
         }
         .modal-card p {
             font-size: 0.85rem;
-            color: #94A3B8;
+            color: var(--muted);
             margin-bottom: 20px;
             text-align: center;
         }
@@ -707,18 +766,19 @@
         .form-group label {
             display: block;
             font-size: 0.8rem;
-            color: #CBD5E1;
+            color: var(--text-2);
             margin-bottom: 4px;
             font-weight: 500;
         }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 10px;
-            background: #0F172A;
-            color: #F8FAFC;
-            border: 1px solid #334155;
+            padding: 11px 12px;
+            min-height: var(--tap);
+            background: var(--surface-0);
+            color: var(--text);
+            border: 1px solid var(--border);
             border-radius: 10px;
-            font-size: 0.9rem;
+            font-size: 16px;   /* abaixo de 16px o iPhone dá zoom ao tocar no campo */
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
@@ -739,12 +799,140 @@
             border: none;
         }
         .btn-cancel {
-            background: #334155;
-            color: #E2E8F0;
+            background: var(--border);
+            color: var(--text-2);
         }
         .btn-primary {
             background: linear-gradient(135deg, #3B82F6, #4F46E5);
             color: white;
+        }
+
+        /* ---------- Valores (cor por significado, sempre pelas variáveis) ---------- */
+        .amount { color: var(--text); white-space: nowrap; }
+        .amount.pos { color: var(--positive); }
+        .amount.neg { color: var(--negative); }
+        .amount.muted { color: var(--muted); }
+        .amount.accent { color: var(--accent-soft); }
+        .amount.strong, .detail-row .amount.strong { font-weight: 600; }
+        .detail-row.highlight .amount { color: var(--text); font-size: 1rem; }
+        .row-meta { color: var(--muted); font-size: 0.78rem; font-weight: 400; }
+        .empty-line { font-size: 0.85rem; color: var(--muted); padding: 6px 0; }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 20px;
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .empty-state-title { color: var(--text); font-weight: 600; font-size: 1rem; margin-bottom: 6px; }
+
+        .card-section.card-muted { background: var(--surface-2); }
+        .card-section.card-muted h3 { color: var(--muted); }
+        .expense-item.row-total { font-weight: 700; color: var(--text); }
+        .expense-item.row-divided { margin-top: 10px; border-top: 1px solid var(--border); }
+        .expense-item.clickable { min-height: var(--tap); }
+
+        /* Resumo do Mês: conta visível que fecha com o Saldo Livre + linhas só informativas */
+        .expense-item.summary-total {
+            border-top: 1px dashed var(--border);
+            border-bottom: none;
+            margin-top: 2px;
+            font-weight: 700;
+        }
+        .summary-note {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .summary-note-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        .summary-note-row span:last-child { white-space: nowrap; }
+        .summary-note-row small { font-size: 0.74rem; }
+        .summary-card h2.is-negative { color: #FECACA; }
+
+        /* Placar */
+        .placar-eyebrow {
+            font-size: 0.78rem;
+            color: var(--accent-soft);
+            font-weight: 600;
+            margin-bottom: 6px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .placar-main { font-size: 1.2rem; }
+        .placar-formula { font-size: 0.78rem; color: var(--accent-soft); margin-top: 4px; line-height: 1.4; }
+        .placar-block {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(147, 197, 253, 0.25);
+        }
+        .placar-block.clickable { cursor: pointer; }
+
+        /* Leitura da folha */
+        .ocr-status.is-info { color: var(--accent-soft); }
+        .ocr-status.is-ok { color: var(--positive); }
+        .ocr-status.is-warn { color: var(--warning); }
+        .ocr-status.is-error { color: var(--negative); }
+        .ocr-debug { margin-bottom: 10px; font-size: 0.78rem; color: var(--muted); }
+        .ocr-debug summary { cursor: pointer; text-align: center; color: var(--accent); min-height: var(--tap); line-height: var(--tap); }
+        .ocr-debug pre {
+            white-space: pre-wrap;
+            background: var(--surface-0);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 6px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: ui-monospace, Menlo, Consolas, monospace;
+        }
+
+        /* Tela inicial sem o cabeçalho escuro em degradê */
+        .app-header.compact { background: var(--surface-0); border-bottom: none; padding-bottom: 6px; }
+        .app-header.compact .summary-card { margin-top: 0; }
+        .detail-subtitle { font-size: 0.85rem; color: var(--text-2); margin-top: 4px; }
+
+        /* Backup */
+        .btn-edit-inline { white-space: nowrap; flex-shrink: 0; }
+        .card-section-header { gap: 10px; }
+        .backup-actions { display: flex; gap: 8px; }
+        .backup-actions .btn-edit-inline { flex: 1; }
+        .backup-hint { font-size: 0.8rem; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+
+        /* ---------- Toque, foco e movimento ---------- */
+        .btn, .btn-action, .btn-delete, .btn-scan-sheet, .type-option { min-height: var(--tap); }
+        .badge { font-size: 0.75rem; }
+        .type-option small { font-size: 0.78rem; }
+        .fab { bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+        button, [onclick], summary { -webkit-tap-highlight-color: transparent; }
+        :focus-visible {
+            outline: 2px solid var(--focus);
+            outline-offset: 2px;
+            border-radius: 10px;
+        }
+        .form-group input:focus-visible, .form-group select:focus-visible {
+            outline: none;
+            border-color: var(--focus);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+        }
+        @media (hover: none) {
+            /* No celular, o :hover "gruda" depois do toque */
+            .expense-item.clickable:hover { background: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
         }
     </style>
 </head>
@@ -754,8 +942,8 @@
         
         <!-- TELA 1: LISTA DE VIAGENS -->
         <div id="screen-list" class="screen active">
-            <div class="app-header" style="background: #0F172A; border-bottom: none; padding-bottom: 6px;">
-                <div class="summary-card" style="margin-top: 0;">
+            <div class="app-header compact">
+                <div class="summary-card">
                     <p>Total Pendente de Receber</p>
                     <h2 id="total-pending">R$ 0,00</h2>
                 </div>
@@ -791,19 +979,25 @@
                     <h3>Resumo do Mês</h3>
                     <div class="expense-item">
                         <span>Lucros Líquidos (Viagens Pagas)</span>
-                        <span id="month-profits" style="font-weight: 700; color: #059669;">+ R$ 0,00</span>
-                    </div>
-                    <div class="expense-item">
-                        <span>Gastos Pessoais (Viagens)</span>
-                        <span id="month-trip-personal" style="font-weight: 600; color: #64748b;">- R$ 0,00</span>
+                        <span id="month-profits" class="amount pos strong">+ R$ 0,00</span>
                     </div>
                     <div class="expense-item">
                         <span>Gastos do Dia a Dia</span>
-                        <span id="month-daily-total" style="font-weight: 600; color: #dc2626;">- R$ 0,00</span>
+                        <span id="month-daily-total" class="amount neg">- R$ 0,00</span>
                     </div>
-                    <div class="expense-item" style="border-top: 1px dashed #e5e7eb; margin-top: 4px; padding-top: 8px; font-weight: 700;">
-                        <span>Total de Gastos Pessoais</span>
-                        <span id="month-total-personal" style="color: #dc2626;">R$ 0,00</span>
+                    <div class="expense-item summary-total">
+                        <span>Saldo Livre</span>
+                        <span id="month-net-inline" class="amount">R$ 0,00</span>
+                    </div>
+                    <div class="summary-note">
+                        <div class="summary-note-row">
+                            <span>Gastos pessoais nas viagens pagas <small>(já descontados do lucro)</small></span>
+                            <span id="month-trip-personal">R$ 0,00</span>
+                        </div>
+                        <div class="summary-note-row">
+                            <span>Total gasto comigo no mês</span>
+                            <span id="month-total-personal">R$ 0,00</span>
+                        </div>
                     </div>
                 </div>
 
@@ -821,8 +1015,8 @@
                 </div>
 
                 <!-- Gastos Pessoais das Viagens -->
-                <div class="card-section" style="border-color: #334155; background: #162032;">
-                    <h3 style="color: #94A3B8;">Gastos Pessoais das Viagens</h3>
+                <div class="card-section card-muted">
+                    <h3>Gastos Pessoais das Viagens</h3>
                     <div id="month-trip-expenses-list"></div>
                 </div>
 
@@ -830,6 +1024,17 @@
                 <div class="card-section">
                     <h3>Viagens Pagas no Mês</h3>
                     <div id="month-paid-trips-list"></div>
+                </div>
+
+                <!-- Backup dos dados (os dados só existem neste aparelho) -->
+                <div class="card-section card-muted">
+                    <h3>Backup dos dados</h3>
+                    <div class="backup-actions">
+                        <button type="button" class="btn-edit-inline" onclick="exportBackup()">Exportar backup</button>
+                        <button type="button" class="btn-edit-inline" onclick="document.getElementById('backupFileInput').click()">Importar backup</button>
+                    </div>
+                    <input type="file" id="backupFileInput" accept="application/json,.json" hidden onchange="importBackup(event)">
+                    <p id="backup-hint" class="backup-hint">Suas viagens ficam só neste celular. Exporte um backup de vez em quando e guarde no Drive ou no WhatsApp.</p>
                 </div>
             </div>
         </div>
@@ -840,7 +1045,7 @@
             <div class="app-header">
                 <button class="back-btn" onclick="showList()">← Voltar</button>
                 <h1 id="detail-title">Destino</h1>
-                <div id="detail-subtitle" style="font-size: 0.8rem; opacity: 0.9; margin-top: 4px;">Data - Status</div>
+                <div id="detail-subtitle" class="detail-subtitle">Data - Status</div>
             </div>
 
             <div class="app-content">
@@ -856,32 +1061,32 @@
                         <h3>1. Folha da Viagem (Entradas)</h3>
                         <button type="button" class="btn-edit-inline" onclick="openTripModal(currentTripId)">✏️ Editar</button>
                     </div>
-                    <div class="expense-item" style="border-bottom: 1px solid #e5e7eb; font-weight: 700; color: #166534;">
+                    <div class="expense-item row-total">
                         <span>Total Já Depositado</span>
-                        <span class="expense-amount"><span id="det-deposited">R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-deposited" class="amount pos">R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Adiantamento</span>
-                        <span class="expense-amount"><span id="det-advance" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-advance" class="amount pos">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Pedágio</span>
-                        <span class="expense-amount"><span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-toll" class="amount pos">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
-                        <span>Passagem rodoviária</span>
-                        <span class="expense-amount"><span id="det-bus-ticket" style="font-weight: 600; color: #4b5563;">R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span>Passagem rodoviária <small class="row-meta">(já inclusa no depósito)</small></span>
+                        <span class="expense-amount"><span id="det-bus-ticket" class="amount muted">R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div id="extra-incomes-list">
                         <!-- Entradas extras (diárias, depósitos) -->
                     </div>
                     <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Bônus sem ocorrência</span>
-                        <span class="expense-amount"><span id="det-bonus" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-bonus" class="amount pos">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
-                    <div class="expense-item clickable" onclick="openTripModal(currentTripId)" title="Toque para editar" style="margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px;">
+                    <div class="expense-item clickable row-divided" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <span>Saldo</span>
-                        <span class="expense-amount"><span id="det-remainder" style="font-weight: 600; color: #2563eb;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                        <span class="expense-amount"><span id="det-remainder" class="amount accent">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="tap-hint">Toque em um valor fixo ou em Editar para alterar a folha.</div>
                 </div>
@@ -895,8 +1100,8 @@
                 </div>
 
                 <!-- Bloco 3: Gastos Pessoais -->
-                <div class="card-section" style="border-color: #334155; background: #162032;">
-                    <h3 style="color: #94A3B8;">3. Meus Gastos</h3>
+                <div class="card-section card-muted">
+                    <h3>3. Meus Gastos</h3>
                     <div id="personal-list">
                         <!-- Itens dinâmicos -->
                     </div>
@@ -925,23 +1130,23 @@
 
                 <!-- Bloco 4: Placar Final -->
                 <div class="placar-box">
-                    <div style="font-size: 0.78rem; color: #93C5FD; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.4px;">RESULTADO DO ACERTO COM A EMPRESA</div>
+                    <div class="placar-eyebrow">Resultado do acerto com a empresa</div>
                     <div class="placar-row">
                         <span>Acerto a Receber:</span>
-                        <span id="det-balance" style="font-size: 1.2rem; color: #34D399;">R$ 0,00</span>
+                        <span id="det-balance" class="amount pos placar-main">R$ 0,00</span>
                     </div>
-                    <div id="det-balance-formula" style="font-size: 0.75rem; color: #93C5FD; opacity: 0.85; margin-top: 4px;">Saldo + Bônus sem ocorrência</div>
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(147, 197, 253, 0.25);">
+                    <div id="det-balance-formula" class="placar-formula">Saldo + Bônus sem ocorrência</div>
+                    <div class="placar-block">
                         <div class="placar-row">
                             <span>Lucro Líquido da Viagem:</span>
-                            <span id="det-net-profit" style="font-size: 1.15rem; color: #34D399;">R$ 0,00</span>
+                            <span id="det-net-profit" class="amount pos placar-main">R$ 0,00</span>
                         </div>
-                        <div style="font-size: 0.75rem; color: #93C5FD; opacity: 0.85; margin-top: 2px;">Acerto a Receber + Restante do Depositado</div>
+                        <div class="placar-formula">Acerto a Receber + Restante do Depositado</div>
                     </div>
-                    <div onclick="openTripModal(currentTripId)" title="Toque para editar" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(147, 197, 253, 0.25); cursor: pointer;">
+                    <div class="placar-block clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <div class="placar-row">
                             <span>Frete Contratado Líquido (NFS-e):</span>
-                            <span id="det-freight-net" style="font-size: 1.05rem; color: #93C5FD;">R$ 0,00</span>
+                            <span id="det-freight-net" class="amount accent">R$ 0,00</span>
                         </div>
                     </div>
                 </div>
@@ -965,7 +1170,7 @@
 
 
         <!-- MODAL: NOVA / EDITAR VIAGEM -->
-        <div id="tripModal" class="modal">
+        <div id="tripModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card">
                 <h3 id="tripModalTitle">Nova Viagem</h3>
                 <p id="tripModalSub">Preencha os dados da folha da viagem.</p>
@@ -973,43 +1178,43 @@
                     <input type="file" id="sheetPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handleSheetPhoto(event)">
                     <button type="button" id="btnScanSheet" class="btn-scan-sheet" onclick="openScannerModal()">📄 Digitalizar Folha (Câmera)</button>
                     <div id="ocrStatus" class="ocr-status"></div>
-                    <details id="ocrDebugBox" style="display: none; margin-bottom: 10px; font-size: 0.72rem; color: #4b5563;">
-                        <summary style="cursor: pointer; text-align: center; color: #6366f1;">Ver texto lido da foto</summary>
-                        <pre id="ocrRawText" style="white-space: pre-wrap; background: #f3f4f6; padding: 8px; border-radius: 8px; margin-top: 6px; max-height: 120px; overflow-y: auto;"></pre>
+                    <details id="ocrDebugBox" class="ocr-debug" hidden>
+                        <summary>Ver texto lido da foto</summary>
+                        <pre id="ocrRawText"></pre>
                     </details>
                 </div>
                 <form id="tripForm" onsubmit="saveTrip(event)">
                     <div class="form-group">
-                        <label>Destino</label>
+                        <label for="tripDest">Destino</label>
                         <input type="text" id="tripDest" placeholder="Ex: Campinas - SP" required>
                     </div>
                     <div class="form-group">
-                        <label>Data</label>
-                        <input type="text" id="tripDate" placeholder="Ex: 26/11/2026" required>
+                        <label for="tripDate">Data</label>
+                        <input type="date" id="tripDate" required>
                     </div>
                     <div class="form-group">
-                        <label>Adiantamento (R$)</label>
-                        <input type="number" step="0.01" id="tripAdvance" placeholder="1050.00" required>
+                        <label for="tripAdvance">Adiantamento (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" id="tripAdvance" placeholder="1050.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Pedágio (R$)</label>
-                        <input type="number" step="0.01" id="tripToll" placeholder="200.00" required>
+                        <label for="tripToll">Pedágio (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" id="tripToll" placeholder="200.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Passagem Rodoviária (R$)</label>
-                        <input type="number" step="0.01" min="0" id="tripBusTicket" placeholder="0.00">
+                        <label for="tripBusTicket">Passagem Rodoviária (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" min="0" id="tripBusTicket" placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label>Bônus Previsto (R$)</label>
-                        <input type="number" step="0.01" id="tripBonus" placeholder="300.00" required>
+                        <label for="tripBonus">Bônus Previsto (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" id="tripBonus" placeholder="300.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Saldo (R$)</label>
-                        <input type="number" step="0.01" id="tripRemainder" placeholder="450.00" required>
+                        <label for="tripRemainder">Saldo (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" id="tripRemainder" placeholder="450.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Frete Contratado Líquido — NFS-e (R$)</label>
-                        <input type="number" step="0.01" min="0" id="tripFreightNet" placeholder="0.00">
+                        <label for="tripFreightNet">Frete Contratado Líquido — NFS-e (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" min="0" id="tripFreightNet" placeholder="0.00">
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeTripModal()">Cancelar</button>
@@ -1021,18 +1226,18 @@
 
 
         <!-- MODAL: NOVO GASTO (MANUAL) -->
-        <div id="expenseModal" class="modal">
+        <div id="expenseModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card">
                 <h3 id="expModalTitle">Novo Gasto</h3>
                 <p id="expModalSub">Registre um gasto desta viagem.</p>
                 <form id="expenseForm" onsubmit="saveExpense(event)">
                     <div class="form-group">
-                        <label>Descrição</label>
+                        <label for="expTitle">Descrição</label>
                         <input type="text" id="expTitle" placeholder="Ex: Uber, Almoço, Hotel, Passagem" oninput="onExpenseTitleChange()" required>
                     </div>
                     <div class="form-group">
-                        <label>Valor (R$)</label>
-                        <input type="number" step="0.01" min="0.01" id="expAmount" placeholder="45.00" required>
+                        <label for="expAmount">Valor (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" min="0.01" id="expAmount" placeholder="45.00" required>
                     </div>
                     <div class="form-group">
                         <label>Quem pagou?</label>
@@ -1053,18 +1258,18 @@
 
 
         <!-- MODAL: NOVA ENTRADA (diária, depósito extra) -->
-        <div id="incomeModal" class="modal">
+        <div id="incomeModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card">
                 <h3 id="incModalTitle">Nova Entrada</h3>
                 <p>Valor depositado pela empresa (diária, depósito extra...). Entra na folha da viagem e no Total Já Depositado.</p>
                 <form id="incomeForm" onsubmit="saveIncome(event)">
                     <div class="form-group">
-                        <label>Descrição</label>
+                        <label for="incTitle">Descrição</label>
                         <input type="text" id="incTitle" placeholder="Ex: Diária, Depósito extra" required>
                     </div>
                     <div class="form-group">
-                        <label>Valor (R$)</label>
-                        <input type="number" step="0.01" min="0.01" id="incAmount" placeholder="100.00" required>
+                        <label for="incAmount">Valor (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" min="0.01" id="incAmount" placeholder="100.00" required>
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeIncomeModal()">Cancelar</button>
@@ -1076,7 +1281,7 @@
 
 
         <!-- MODAL DE DIGITALIZAÇÃO POR CÂMERA -->
-        <div id="scannerModal" class="modal">
+        <div id="scannerModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card" style="max-width: 360px; padding: 18px;">
                 <h3>Digitalizar Folha</h3>
                 <p style="margin-bottom: 10px;">Enquadre a rota e os valores dentro da marcação.</p>
@@ -1095,7 +1300,7 @@
         </div>
 
         <!-- MODAL DE GRAVAÇÃO DE VOZ -->
-        <div id="voiceModal" class="modal">
+        <div id="voiceModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card" style="text-align: center;">
                 <div class="mic-icon">🎤</div>
                 <h3>Ouvindo...</h3>
@@ -1107,23 +1312,23 @@
         </div>
 
         <!-- MODAL: GASTO DO DIA A DIA -->
-        <div id="dailyModal" class="modal">
+        <div id="dailyModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card">
                 <h3 id="dailyModalTitle">Novo Gasto do Dia a Dia</h3>
                 <p id="dailyModalSub">Registre um gasto pessoal fora das viagens.</p>
                 <button type="button" id="btnDailyVoice" class="btn-scan-sheet" onclick="closeDailyModal(); startVoiceRecognition('daily');">🎤 Falar Gasto por Voz</button>
                 <form id="dailyForm" onsubmit="saveDailyExpense(event)">
                     <div class="form-group">
-                        <label>Descrição</label>
+                        <label for="dailyTitle">Descrição</label>
                         <input type="text" id="dailyTitle" placeholder="Ex: Mercado, Farmácia, Conta de luz" required>
                     </div>
                     <div class="form-group">
-                        <label>Valor (R$)</label>
-                        <input type="number" step="0.01" min="0.01" id="dailyAmount" placeholder="50.00" required>
+                        <label for="dailyAmount">Valor (R$)</label>
+                        <input type="number" inputmode="decimal" step="0.01" min="0.01" id="dailyAmount" placeholder="50.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Data</label>
-                        <input type="text" id="dailyDate" placeholder="Ex: 26/11/2026" required>
+                        <label for="dailyDate">Data</label>
+                        <input type="date" id="dailyDate" required>
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeDailyModal()">Cancelar</button>
@@ -1159,37 +1364,77 @@
     </div>
 
     <script>
-        let trips = JSON.parse(localStorage.getItem('viagens_data')) || [
-            {
-                id: 1,
-                destination: "São Paulo - SP",
-                date: "15/11/2026",
-                status: "Aguardando Acerto",
-                advance: 1050,
-                remainder: 450,
-                toll: 200,
-                busTicket: 0,
-                bonus: 300,
-                freightNet: 0,
-                incomes: [],
-                expenses: [
-                    { title: "Uber Hotel", amount: 35, type: "reimbursable" },
-                    { title: "Hospedagem Extra", amount: 565, type: "reimbursable" },
-                    { title: "Almoço", amount: 45, type: "personal" },
-                    { title: "Janta", amount: 55, type: "personal" }
-                ]
+        const STORAGE_TRIPS = 'viagens_data';
+        const STORAGE_DAILY = 'viagens_daily_expenses';
+
+        // Lê uma lista salva sem deixar o app quebrar. Se o conteúdo estiver corrompido,
+        // guarda uma cópia do texto original numa chave separada (nada é apagado) e começa vazio.
+        function loadList(key) {
+            let raw = null;
+            try {
+                raw = localStorage.getItem(key);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+                throw new Error('formato inesperado');
+            } catch (err) {
+                try { if (raw) localStorage.setItem(`${key}_corrompido_${Date.now()}`, raw); } catch (e) {}
+                setTimeout(() => alert('Não consegui ler os dados salvos. Uma cópia foi guardada no aparelho. Se você tiver um backup, use "Importar backup" na aba Meu Mês.'), 300);
+                return [];
             }
-        ];
+        }
 
-        // Viagens salvas em versões antigas não tinham entradas extras ou passagem rodoviária
-        trips.forEach(t => {
-            t.busTicket = t.busTicket || 0;
-            t.freightNet = t.freightNet || 0;
-            t.incomes = t.incomes || [];
-            t.expenses = t.expenses || [];
-        });
+        function saveList(key, list) {
+            try {
+                localStorage.setItem(key, JSON.stringify(list));
+                return true;
+            } catch (err) {
+                alert('Não consegui salvar no aparelho (memória cheia ou bloqueada). Exporte um backup para não perder os dados.');
+                return false;
+            }
+        }
 
-        let dailyExpenses = JSON.parse(localStorage.getItem('viagens_daily_expenses')) || [];
+        // Garante os campos novos em viagens salvas por versões antigas do app
+        function normalizeTrip(t) {
+            t.busTicket = Number(t.busTicket) || 0;
+            t.freightNet = Number(t.freightNet) || 0;
+            t.incomes = Array.isArray(t.incomes) ? t.incomes : [];
+            t.expenses = Array.isArray(t.expenses) ? t.expenses : [];
+            return t;
+        }
+
+        let trips = loadList(STORAGE_TRIPS).map(normalizeTrip);
+        let dailyExpenses = loadList(STORAGE_DAILY);
+
+        // ---------- Datas ----------
+        // As datas continuam salvas como "dd/mm/aaaa" (formato das viagens antigas).
+        // Os campos de data da tela usam o calendário do celular (aaaa-mm-dd) e são convertidos.
+        function brToIso(br) {
+            const m = String(br || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+            if (!m) return '';
+            let year = parseInt(m[3], 10);
+            if (year < 100) year += 2000;
+            return `${year}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+        }
+        function isoToBr(iso) {
+            const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+        }
+        function todayBr() {
+            const now = new Date();
+            return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        }
+        function setDateInput(id, br) {
+            document.getElementById(id).value = brToIso(br);
+        }
+        function getDateInput(id) {
+            return isoToBr(document.getElementById(id).value);
+        }
+        // Número para ordenar (aaaammdd); datas ilegíveis vão para o fim
+        function dateSortKey(br) {
+            const iso = brToIso(br);
+            return iso ? parseInt(iso.replace(/-/g, ''), 10) : 0;
+        }
 
         let currentTripId = null;
         let editingTripId = null;         // null = nova viagem; id = editando folha existente
@@ -1204,7 +1449,7 @@
         const STATUS_PAID = "Pago";
 
         function saveToStorage() {
-            localStorage.setItem('viagens_data', JSON.stringify(trips));
+            saveList(STORAGE_TRIPS, trips);
             renderTrips();
         }
 
@@ -1243,7 +1488,8 @@
         function calcTrip(trip) {
             const extraIncomes = sum(trip.incomes);
             const busTicket = trip.busTicket || 0;
-            const otherReimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable' && !isBusTicket(e.title)));
+            // Pedágio fica fora daqui: ele entra no acerto só pelo excedente (tollExcess), seja qual for o tipo
+            const otherReimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable' && !isBusTicket(e.title) && !isToll(e.title)));
             const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && !isToll(e.title) && !isBusTicket(e.title)));
             const tollSpent = sum(trip.expenses.filter(e => isToll(e.title)));
             const tollExcess = Math.max(0, tollSpent - (trip.toll || 0));
@@ -1305,7 +1551,18 @@
             container.innerHTML = '';
             let totalPending = 0;
 
-            trips.forEach(trip => {
+            if (trips.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p class="empty-state-title">Nenhuma viagem ainda</p>
+                        <p>Toque no <strong>+</strong> abaixo para digitalizar a folha ou digitar os valores da primeira viagem.</p>
+                    </div>`;
+            }
+
+            // Mais recentes primeiro (só na tela; a ordem salva não muda)
+            const ordered = [...trips].sort((a, b) => (dateSortKey(b.date) - dateSortKey(a.date)) || (b.id - a.id));
+
+            ordered.forEach(trip => {
                 const c = calcTrip(trip);
                 if (trip.status === STATUS_PENDING) {
                     totalPending += c.settlement;
@@ -1328,23 +1585,23 @@
                     <div class="trip-details">
                         <div class="detail-row">
                             <span>Total Já Depositado</span>
-                            <span style="color: #F8FAFC; font-weight: 500;">${formatMoney(c.deposited)}</span>
+                            <span class="amount">${formatMoney(c.deposited)}</span>
                         </div>
                         <div class="detail-row">
                             <span>Total de Gastos</span>
-                            <span style="color: #F87171;">- ${formatMoney(c.totalExpenses)}</span>
+                            <span class="amount neg">- ${formatMoney(c.totalExpenses)}</span>
                         </div>
                         <div class="detail-row">
                             <span>Restante do Depositado</span>
-                            <span style="font-weight: 600; color: ${c.remainingDeposited < 0 ? '#FB7185' : '#34D399'};">${formatMoney(c.remainingDeposited)}</span>
+                            <span class="amount strong ${c.remainingDeposited < 0 ? 'neg' : 'pos'}">${formatMoney(c.remainingDeposited)}</span>
                         </div>
                         <div class="detail-row">
                             <span>Lucro Líquido</span>
-                            <span style="font-weight: 600; color: ${c.netProfit < 0 ? '#FB7185' : '#34D399'};">${formatMoney(c.netProfit)}</span>
+                            <span class="amount strong ${c.netProfit < 0 ? 'neg' : 'pos'}">${formatMoney(c.netProfit)}</span>
                         </div>
                         <div class="detail-row highlight">
                             <span>Acerto a Receber</span>
-                            <span style="color: #FFFFFF; font-size: 1rem;">${formatMoney(c.settlement)}</span>
+                            <span class="amount">${formatMoney(c.settlement)}</span>
                         </div>
                     </div>
                 `;
@@ -1375,8 +1632,10 @@
             incomesList.innerHTML = '';
             trip.incomes.forEach((inc, index) => {
                 const item = document.createElement('div');
-                item.className = 'expense-item';
-                item.innerHTML = `<span>${escapeHtml(tidyTitle(inc.title))}</span><span class="expense-amount"><span style="font-weight: 600; color: #059669;">+ ${formatMoney(inc.amount)}</span><button class="expense-del" title="Excluir entrada" onclick="deleteIncome(${index})">×</button></span>`;
+                item.className = 'expense-item clickable';
+                item.title = 'Toque para editar';
+                item.onclick = () => openIncomeModal({ index });
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(inc.title))}</span><span class="expense-amount"><span class="amount pos">+ ${formatMoney(inc.amount)}</span><button type="button" class="expense-del" title="Excluir entrada" aria-label="Excluir entrada" onclick="event.stopPropagation(); deleteIncome(${index})">×</button></span>`;
                 incomesList.appendChild(item);
             });
 
@@ -1396,17 +1655,17 @@
                 item.onclick = () => openExpenseModal({ index });
                 const isReimb = exp.type === 'reimbursable';
                 const amountHtml = isReimb
-                    ? `<span style="color: #dc2626;">- ${formatMoney(exp.amount)}</span>`
-                    : `<span style="color: #64748b;">${formatMoney(exp.amount)}</span>`;
-                item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))}</span><span class="expense-amount">${amountHtml}<button class="expense-del" title="Excluir gasto" onclick="event.stopPropagation(); deleteExpense(${index})">×</button></span>`;
+                    ? `<span class="amount neg">- ${formatMoney(exp.amount)}</span>`
+                    : `<span class="amount muted">${formatMoney(exp.amount)}</span>`;
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))}</span><span class="expense-amount">${amountHtml}<button type="button" class="expense-del" title="Excluir gasto" aria-label="Excluir gasto" onclick="event.stopPropagation(); deleteExpense(${index})">×</button></span>`;
                 (isReimb ? reimbList : personalList).appendChild(item);
             });
 
             if (reimbList.children.length === 0) {
-                reimbList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto reembolsável registrado.</div>';
+                reimbList.innerHTML = '<div class="empty-line">Nenhum gasto reembolsável registrado.</div>';
             }
             if (personalList.children.length === 0) {
-                personalList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal registrado.</div>';
+                personalList.innerHTML = '<div class="empty-line">Nenhum gasto pessoal registrado.</div>';
             }
 
             // Total de gastos
@@ -1429,7 +1688,8 @@
                 : 'Saldo + Bônus sem ocorrência';
             const netEl = document.getElementById('det-net-profit');
             netEl.innerText = formatMoney(c.netProfit);
-            netEl.style.color = c.netProfit < 0 ? '#dc2626' : '#047857';
+            netEl.classList.toggle('neg', c.netProfit < 0);
+            netEl.classList.toggle('pos', c.netProfit >= 0);
             document.getElementById('det-freight-net').innerText = formatMoney(trip.freightNet || 0);
 
             const paidBtn = document.getElementById('btn-toggle-paid');
@@ -1477,7 +1737,7 @@
 
         function selectExpenseType(type, byUser) {
             const title = document.getElementById('expTitle').value;
-            if (isCompanyOnly(title)) type = 'reimbursable';   // pedágio e passagem nunca viram pessoal
+            if (isCompanyOnly(title)) type = 'reimbursable';   // passagem rodoviária nunca vira pessoal
             if (byUser) expenseTypeTouched = true;
             document.getElementById('expType').value = type;
             document.querySelectorAll('.type-option').forEach(btn => {
@@ -1579,9 +1839,21 @@
         }
 
         // ---------- Entradas extras ----------
+        let editingIncomeIndex = null;   // null = nova entrada; número = editando entrada existente
+
+        // options: { index } para editar, ou { title, amount, fromVoice } para pré-preencher
         function openIncomeModal(options = {}) {
             document.getElementById('incomeForm').reset();
-            document.getElementById('incModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Entrada' : 'Nova Entrada';
+            editingIncomeIndex = null;
+            const trip = trips.find(t => t.id === currentTripId);
+            if (trip && typeof options.index === 'number' && trip.incomes[options.index]) {
+                const inc = trip.incomes[options.index];
+                editingIncomeIndex = options.index;
+                options = { ...options, title: inc.title, amount: inc.amount };
+                document.getElementById('incModalTitle').innerText = 'Editar Entrada';
+            } else {
+                document.getElementById('incModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Entrada' : 'Nova Entrada';
+            }
             document.getElementById('incTitle').value = options.title || '';
             document.getElementById('incAmount').value = options.amount || '';
             document.getElementById('incomeModal').classList.add('active');
@@ -1591,6 +1863,7 @@
         function closeIncomeModal() {
             document.getElementById('incomeModal').classList.remove('active');
             document.getElementById('incomeForm').reset();
+            editingIncomeIndex = null;
         }
 
         function saveIncome(e) {
@@ -1601,7 +1874,12 @@
             const amount = parseFloat(document.getElementById('incAmount').value);
             if (!title || !(amount > 0)) return;
 
-            trip.incomes.push({ title: tidyTitle(title), amount: amount });
+            const income = { title: tidyTitle(title), amount: amount };
+            if (editingIncomeIndex !== null && trip.incomes[editingIncomeIndex]) {
+                trip.incomes[editingIncomeIndex] = income;
+            } else {
+                trip.incomes.push(income);
+            }
             saveToStorage();
             closeIncomeModal();
             openDetail(trip.id);
@@ -1672,7 +1950,7 @@
         }
 
         function saveDailyToStorage() {
-            localStorage.setItem('viagens_daily_expenses', JSON.stringify(dailyExpenses));
+            saveList(STORAGE_DAILY, dailyExpenses);
             renderMonth();
         }
 
@@ -1692,30 +1970,33 @@
                 const item = document.createElement('div');
                 item.className = 'expense-item clickable';
                 item.onclick = () => openDetail(t.id);
-                item.innerHTML = `<span>${escapeHtml(t.destination)} <small style="color:#6b7280;">(${escapeHtml(t.date)})</small></span><span style="font-weight:600; color:${c.netProfit < 0 ? '#dc2626' : '#059669'};">${formatMoney(c.netProfit)}</span>`;
+                item.innerHTML = `<span>${escapeHtml(t.destination)} <small class="row-meta">(${escapeHtml(t.date)})</small></span><span class="amount strong ${c.netProfit < 0 ? 'neg' : 'pos'}">${formatMoney(c.netProfit)}</span>`;
                 paidListEl.appendChild(item);
             });
             if (paidTrips.length === 0) {
-                paidListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhuma viagem marcada como Pago neste mês.</div>';
+                paidListEl.innerHTML = '<div class="empty-line">Nenhuma viagem marcada como Pago neste mês.</div>';
             }
 
-            let tripPersonalTotal = 0;
+            // Só os gastos das viagens PAGAS entram no resumo: são esses que já estão descontados do lucro.
+            // A lista abaixo mostra todas as viagens do mês e marca as que ainda estão pendentes.
+            let tripPersonalPaid = 0;
             const tripExpListEl = document.getElementById('month-trip-expenses-list');
             tripExpListEl.innerHTML = '';
             monthTrips.forEach(t => {
+                const isPaid = t.status === STATUS_PAID;
                 (t.expenses || []).forEach(exp => {
-                    if (exp.type !== 'reimbursable' && !isToll(exp.title)) {
-                        tripPersonalTotal += exp.amount;
+                    if (exp.type !== 'reimbursable' && !isToll(exp.title) && !isBusTicket(exp.title)) {
+                        if (isPaid) tripPersonalPaid += exp.amount;
                         const item = document.createElement('div');
                         item.className = 'expense-item clickable';
                         item.onclick = () => openDetail(t.id);
-                        item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))} <small style="color:#6b7280;">· ${escapeHtml(t.destination)}</small></span><span style="color:#64748b;">${formatMoney(exp.amount)}</span>`;
+                        item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))} <small class="row-meta">· ${escapeHtml(t.destination)}${isPaid ? '' : ' · pendente'}</small></span><span class="amount muted">${formatMoney(exp.amount)}</span>`;
                         tripExpListEl.appendChild(item);
                     }
                 });
             });
             if (tripExpListEl.children.length === 0) {
-                tripExpListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal nas viagens deste mês.</div>';
+                tripExpListEl.innerHTML = '<div class="empty-line">Nenhum gasto pessoal nas viagens deste mês.</div>';
             }
 
             let dailyTotal = 0;
@@ -1726,23 +2007,28 @@
                 const item = document.createElement('div');
                 item.className = 'expense-item clickable';
                 item.onclick = () => openDailyModal(d.id);
-                item.innerHTML = `<span>${escapeHtml(tidyTitle(d.title))} <small style="color:#6b7280;">(${escapeHtml(d.date)})</small></span><span class="expense-amount"><span style="color:#dc2626;">- ${formatMoney(d.amount)}</span><button class="expense-del" title="Excluir gasto" onclick="event.stopPropagation(); deleteDailyExpense(${d.id})">×</button></span>`;
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(d.title))} <small class="row-meta">(${escapeHtml(d.date)})</small></span><span class="expense-amount"><span class="amount neg">- ${formatMoney(d.amount)}</span><button type="button" class="expense-del" title="Excluir gasto" aria-label="Excluir gasto" onclick="event.stopPropagation(); deleteDailyExpense(${d.id})">×</button></span>`;
                 dailyListEl.appendChild(item);
             });
             if (monthDaily.length === 0) {
-                dailyListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto do dia a dia neste mês.</div>';
+                dailyListEl.innerHTML = '<div class="empty-line">Nenhum gasto do dia a dia neste mês.</div>';
             }
 
-            const totalPersonal = tripPersonalTotal + dailyTotal;
+            // Saldo Livre = Lucros pagos − Dia a dia (os gastos pessoais das viagens já saíram do lucro)
             const netMonth = profitsPaid - dailyTotal;
+            const totalPersonal = tripPersonalPaid + dailyTotal;
 
             document.getElementById('month-profits').innerText = '+ ' + formatMoney(profitsPaid);
-            document.getElementById('month-trip-personal').innerText = '- ' + formatMoney(tripPersonalTotal);
             document.getElementById('month-daily-total').innerText = '- ' + formatMoney(dailyTotal);
+            const netInline = document.getElementById('month-net-inline');
+            netInline.innerText = formatMoney(netMonth);
+            netInline.classList.toggle('neg', netMonth < 0);
+            netInline.classList.toggle('pos', netMonth >= 0);
+            document.getElementById('month-trip-personal').innerText = formatMoney(tripPersonalPaid);
             document.getElementById('month-total-personal').innerText = formatMoney(totalPersonal);
             const netEl = document.getElementById('month-net');
             netEl.innerText = formatMoney(netMonth);
-            netEl.style.color = netMonth < 0 ? '#fecaca' : '#ffffff';
+            netEl.classList.toggle('is-negative', netMonth < 0);
         }
 
         function openDailyModal(id = null, options = {}) {
@@ -1759,7 +2045,7 @@
                 document.getElementById('dailyModalSub').innerText = 'Altere os dados do gasto.';
                 document.getElementById('dailyTitle').value = existing.title;
                 document.getElementById('dailyAmount').value = existing.amount;
-                document.getElementById('dailyDate').value = existing.date;
+                setDateInput('dailyDate', existing.date);
             } else {
                 voiceBtn.style.display = 'flex';
                 document.getElementById('dailyModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Gasto' : 'Novo Gasto do Dia a Dia';
@@ -1768,8 +2054,7 @@
                     : 'Registre um gasto pessoal fora das viagens.';
                 if (options.title) document.getElementById('dailyTitle').value = options.title;
                 if (options.amount) document.getElementById('dailyAmount').value = options.amount;
-                const now = new Date();
-                document.getElementById('dailyDate').value = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                setDateInput('dailyDate', todayBr());
             }
             document.getElementById('dailyModal').classList.add('active');
             if (!options.title && !existing) document.getElementById('dailyTitle').focus();
@@ -1785,7 +2070,7 @@
             e.preventDefault();
             const title = tidyTitle(document.getElementById('dailyTitle').value.trim());
             const amount = parseFloat(document.getElementById('dailyAmount').value);
-            const date = document.getElementById('dailyDate').value.trim();
+            const date = getDateInput('dailyDate');
             if (!title || !(amount > 0) || !date) return;
 
             if (editingDailyId !== null) {
@@ -1811,6 +2096,98 @@
             }
         }
 
+        // ---------- Backup (exportar / importar) ----------
+        const STORAGE_LAST_BACKUP = 'viagens_last_backup';
+
+        function updateBackupHint() {
+            const el = document.getElementById('backup-hint');
+            if (!el) return;
+            let last = null;
+            try { last = localStorage.getItem(STORAGE_LAST_BACKUP); } catch (e) {}
+            el.innerText = last
+                ? `Último backup exportado em ${last}. Suas viagens ficam só neste celular.`
+                : 'Suas viagens ficam só neste celular. Exporte um backup de vez em quando e guarde no Drive ou no WhatsApp.';
+        }
+
+        async function exportBackup() {
+            const data = {
+                app: 'controle-viagens',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                trips,
+                dailyExpenses
+            };
+            const json = JSON.stringify(data, null, 2);
+            const fileName = `viagens-backup-${brToIso(todayBr())}.json`;
+            const blob = new Blob([json], { type: 'application/json' });
+
+            let done = false;
+            try {
+                const file = new File([blob], fileName, { type: 'application/json' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: 'Backup das viagens' });
+                    done = true;
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;   // usuário cancelou o compartilhamento
+            }
+            if (!done) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+            try { localStorage.setItem(STORAGE_LAST_BACKUP, todayBr()); } catch (e) {}
+            updateBackupHint();
+        }
+
+        function importBackup(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                let data;
+                try {
+                    data = JSON.parse(reader.result);
+                } catch (err) {
+                    alert('Este arquivo não é um backup válido do app.');
+                    return;
+                }
+                const newTrips = Array.isArray(data) ? data : data && data.trips;
+                const newDaily = data && Array.isArray(data.dailyExpenses) ? data.dailyExpenses : [];
+                if (!Array.isArray(newTrips)) {
+                    alert('Este arquivo não é um backup válido do app.');
+                    return;
+                }
+                const msg = `Substituir os dados atuais (${trips.length} viagem(ns), ${dailyExpenses.length} gasto(s) do dia a dia) ` +
+                    `pelos do backup (${newTrips.length} viagem(ns), ${newDaily.length} gasto(s) do dia a dia)?\n\n` +
+                    'Uma cópia dos dados atuais fica guardada no aparelho.';
+                if (!confirm(msg)) return;
+
+                // Guarda os dados atuais antes de substituir, por segurança
+                try {
+                    const stamp = Date.now();
+                    localStorage.setItem(`${STORAGE_TRIPS}_antes_import_${stamp}`, JSON.stringify(trips));
+                    localStorage.setItem(`${STORAGE_DAILY}_antes_import_${stamp}`, JSON.stringify(dailyExpenses));
+                } catch (e) {}
+
+                trips = newTrips.map(normalizeTrip);
+                dailyExpenses = newDaily;
+                saveList(STORAGE_TRIPS, trips);
+                saveList(STORAGE_DAILY, dailyExpenses);
+                renderTrips();
+                renderMonth();
+                alert('Backup importado.');
+            };
+            reader.onerror = () => alert('Não consegui ler o arquivo.');
+            reader.readAsText(file);
+        }
+
         function openTripModal(tripId = null) {
             const form = document.getElementById('tripForm');
             form.reset();
@@ -1818,7 +2195,8 @@
 
             const trip = tripId !== null ? trips.find(t => t.id === tripId) : null;
             document.getElementById('ocrStatus').innerText = '';
-            document.getElementById('ocrDebugBox').style.display = 'none';
+            document.getElementById('ocrDebugBox').hidden = true;
+            setOcrStatus('', '');
             document.getElementById('ocrRawText').innerText = '';
             document.getElementById('sheetPhotoInput').value = '';
             document.getElementById('scanSheetBox').style.display = trip ? 'none' : 'block';
@@ -1829,7 +2207,7 @@
                 document.getElementById('tripModalSub').innerText = 'Altere os dados ou valores da viagem.';
                 document.getElementById('tripSubmitBtn').innerText = 'Salvar Alterações';
                 document.getElementById('tripDest').value = trip.destination || '';
-                document.getElementById('tripDate').value = trip.date || '';
+                setDateInput('tripDate', trip.date);
                 document.getElementById('tripAdvance').value = trip.advance ?? 0;
                 document.getElementById('tripToll').value = trip.toll ?? 0;
                 document.getElementById('tripBusTicket').value = trip.busTicket ?? 0;
@@ -1840,6 +2218,7 @@
                 document.getElementById('tripModalTitle').innerText = 'Nova Viagem';
                 document.getElementById('tripModalSub').innerText = 'Preencha os dados da folha da viagem.';
                 document.getElementById('tripSubmitBtn').innerText = 'Salvar Viagem';
+                setDateInput('tripDate', todayBr());
             }
 
             document.getElementById('tripModal').classList.add('active');
@@ -1854,7 +2233,8 @@
         function saveTrip(e) {
             e.preventDefault();
             const dest = document.getElementById('tripDest').value.trim();
-            const date = document.getElementById('tripDate').value.trim();
+            const date = getDateInput('tripDate');
+            if (!dest || !date) return;
             const adv = parseFloat(document.getElementById('tripAdvance').value) || 0;
             const toll = parseFloat(document.getElementById('tripToll').value) || 0;
             const busTicket = parseFloat(document.getElementById('tripBusTicket').value) || 0;
@@ -1905,7 +2285,8 @@
             if (window.Tesseract) return Promise.resolve(window.Tesseract);
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                // Versão fixa: "@5" solto pode trocar a biblioteca sem aviso
+                script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
                 script.onload = () => resolve(window.Tesseract);
                 script.onerror = () => reject(new Error('Falha ao carregar leitor de imagem.'));
                 document.head.appendChild(script);
@@ -1914,8 +2295,11 @@
 
         function parseBrNumber(str) {
             if (!str) return null;
-            let cleaned = str.replace(/[^\d.,]/g, '');
-            if (cleaned.includes(',') && cleaned.includes('.')) {
+            let cleaned = String(str).replace(/[^\d.,]/g, '');
+            if (/^\d{1,3}(\.\d{3})+$/.test(cleaned)) {
+                // "1.050" ou "12.500" = milhar, não decimal
+                cleaned = cleaned.replace(/\./g, '');
+            } else if (cleaned.includes(',') && cleaned.includes('.')) {
                 cleaned = cleaned.replace(/\./g, '').replace(',', '.');
             } else if (cleaned.includes(',')) {
                 cleaned = cleaned.replace(',', '.');
@@ -1925,7 +2309,7 @@
         }
 
         function extractMoneyNear(lines, normLines, regex) {
-            const moneyRe = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+[.,]\d{2}|\d+)/i;
+            const moneyRe = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d{1,3}(?:\.\d{3})+(?![\d,])|\d+[.,]\d{2}|\d+)/i;
             for (let i = 0; i < normLines.length; i++) {
                 if (regex.test(normLines[i])) {
                     // Pega só o trecho logo após o rótulo, parando antes da coluna da direita
@@ -2106,6 +2490,13 @@
             }, 'image/jpeg', 0.92);
         }
 
+        // Mensagem de andamento da leitura da folha (a cor vem da classe, não do JS)
+        function setOcrStatus(state, text) {
+            const el = document.getElementById('ocrStatus');
+            el.className = 'ocr-status' + (state ? ' is-' + state : '');
+            el.innerText = text;
+        }
+
         let ocrWorker = null;
         async function getOcrWorker(statusEl) {
             if (ocrWorker) return ocrWorker;
@@ -2125,8 +2516,7 @@
             const statusEl = document.getElementById('ocrStatus');
             const btn = document.getElementById('btnScanSheet');
             btn.disabled = true;
-            statusEl.style.color = '#4338ca';
-            statusEl.innerText = '⏳ Lendo a folha...';
+            setOcrStatus('info', '⏳ Lendo a folha...');
 
             try {
                 const worker = await getOcrWorker(statusEl);
@@ -2134,13 +2524,14 @@
 
                 const rawText = result.data.text || '';
                 document.getElementById('ocrRawText').innerText = rawText;
-                document.getElementById('ocrDebugBox').style.display = rawText ? 'block' : 'none';
+                document.getElementById('ocrDebugBox').hidden = !rawText;
                 const data = parseSheetText(rawText);
-                const now = new Date();
-                const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                const todayStr = todayBr();
                 let filled = 0;
                 if (data.destination) { document.getElementById('tripDest').value = tidyTitle(data.destination); filled++; }
-                document.getElementById('tripDate').value = todayStr; filled++;
+                // Usa a data lida da folha; se não achar, deixa a de hoje (não conta como campo lido)
+                setDateInput('tripDate', data.date || todayStr);
+                if (data.date) filled++;
                 if (data.advance !== null) { document.getElementById('tripAdvance').value = data.advance.toFixed(2); filled++; }
                 if (data.toll !== null) { document.getElementById('tripToll').value = data.toll.toFixed(2); filled++; }
                 if (data.busTicket !== null) { document.getElementById('tripBusTicket').value = data.busTicket.toFixed(2); filled++; }
@@ -2149,15 +2540,12 @@
                 if (data.freightNet !== null) { document.getElementById('tripFreightNet').value = data.freightNet.toFixed(2); filled++; }
 
                 if (filled > 0) {
-                    statusEl.style.color = '#059669';
-                    statusEl.innerText = `✅ ${filled} campo(s) preenchido(s)! Confira os valores abaixo.`;
+                    setOcrStatus('ok', `✅ ${filled} campo(s) preenchido(s)! Confira os valores abaixo.`);
                 } else {
-                    statusEl.style.color = '#b45309';
-                    statusEl.innerText = '⚠️ Não consegui identificar os campos. Tente aproximar mais da folha ou preencha abaixo.';
+                    setOcrStatus('warn', '⚠️ Não consegui identificar os campos. Tente aproximar mais da folha ou preencha abaixo.');
                 }
             } catch (err) {
-                statusEl.style.color = '#dc2626';
-                statusEl.innerText = '❌ Erro ao ler a folha (verifique a internet). Preencha manualmente.';
+                setOcrStatus('error', '❌ Erro ao ler a folha (verifique a internet). Preencha manualmente.');
             } finally {
                 btn.disabled = false;
             }
@@ -2167,14 +2555,12 @@
             const file = event.target.files && event.target.files[0];
             if (!file) return;
             const statusEl = document.getElementById('ocrStatus');
-            statusEl.style.color = '#4338ca';
-            statusEl.innerText = '⏳ Preparando imagem...';
+            setOcrStatus('info', '⏳ Preparando imagem...');
             try {
                 const processedBlob = await preprocessImageForOCR(file);
                 await runOcrOnBlob(processedBlob);
             } catch (err) {
-                statusEl.style.color = '#dc2626';
-                statusEl.innerText = '❌ Erro ao preparar a foto.';
+                setOcrStatus('error', '❌ Erro ao preparar a foto.');
             } finally {
                 event.target.value = '';
             }
@@ -2206,9 +2592,24 @@
                 processVoiceCommand(speechResult);
             };
 
+            let gotResult = false;
+            const originalOnResult = recognition.onresult;
+            recognition.onresult = function(event) { gotResult = true; originalOnResult(event); };
+
             recognition.onerror = function(event) {
-                document.getElementById('voice-status').innerText = 'Não entendi. Tente novamente.';
+                gotResult = true;   // a mensagem de erro já cuida de fechar
+                document.getElementById('voice-status').innerText = event.error === 'not-allowed'
+                    ? 'O microfone está bloqueado. Libere o acesso nas configurações do navegador.'
+                    : 'Não entendi. Tente novamente.';
                 setTimeout(stopVoiceRecognition, 2000);
+            };
+
+            // Se o usuário não falar nada, o navegador encerra sem resultado: fecha o modal
+            recognition.onend = function() {
+                if (!gotResult) {
+                    document.getElementById('voice-status').innerText = 'Não ouvi nada. Toque no 🎤 e tente de novo.';
+                    setTimeout(stopVoiceRecognition, 1500);
+                }
             };
 
             recognition.start();
@@ -2223,9 +2624,11 @@
 
         // Interpreta a frase falada. Retorna { kind: 'income'|'expense', title, amount } ou null.
         function parseVoiceText(text) {
-            const numbers = text.match(/\d+([.,]\d+)?/);
+            // Aceita "45", "45,50", "1.050" (mil e cinquenta) e "1.050,00"
+            const numbers = text.match(/\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?/);
             if (!numbers) return null;
-            const amount = parseFloat(numbers[0].replace(',', '.'));
+            const amount = parseBrNumber(numbers[0]);
+            if (!(amount > 0)) return null;
             const isIncome = /(recebi|depositaram|depositou|deposito|diaria|entrada)/.test(normalize(text));
 
             // Remove o valor e palavras de ligação apenas quando são palavras inteiras
@@ -2258,8 +2661,25 @@
             }
         }
 
+        // Esc fecha o modal aberto (útil no computador e com teclado Bluetooth)
+        const MODAL_CLOSERS = {
+            scannerModal: closeScannerModal,
+            voiceModal: stopVoiceRecognition,
+            expenseModal: closeExpenseModal,
+            incomeModal: closeIncomeModal,
+            dailyModal: closeDailyModal,
+            tripModal: closeTripModal
+        };
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            // Ordem acima: o scanner abre por cima da viagem, então fecha primeiro
+            const openId = Object.keys(MODAL_CLOSERS).find(id => document.getElementById(id).classList.contains('active'));
+            if (openId) MODAL_CLOSERS[openId]();
+        });
+
         // Inicializar renderização
         renderTrips();
+        updateBackupHint();
 
         // Service Worker
         if ('serviceWorker' in navigator) {

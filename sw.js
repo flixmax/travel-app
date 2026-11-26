@@ -1,5 +1,5 @@
 // Ao alterar arquivos do app, aumente a versão para forçar a limpeza do cache antigo.
-const CACHE_NAME = 'viagens-app-v42';
+const CACHE_NAME = 'viagens-app-v43';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,6 +7,9 @@ const urlsToCache = [
   './icon-192.png',
   './icon-512.png'
 ];
+
+// Com sinal fraco na estrada, não espera a rede para sempre: depois deste tempo usa o cache.
+const NETWORK_TIMEOUT_MS = 3000;
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -27,22 +30,34 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Rede primeiro: sempre busca a versão mais nova e atualiza o cache.
-// Sem internet, usa o que estiver em cache.
+// Rede primeiro, com tempo limite: busca a versão mais nova e atualiza o cache.
+// Se a rede demorar mais que NETWORK_TIMEOUT_MS (ou falhar), usa o que estiver em cache.
+// Se não houver cache, continua esperando a rede.
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const sameOrigin = new URL(request.url).origin === self.location.origin;
+
+  const networkFetch = fetch(request).then(response => {
+    if (response.ok && sameOrigin) {
+      const copy = response.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+    }
+    return response;
+  });
+  networkFetch.catch(() => {}); // evita erro não tratado quando a resposta já veio do cache
+
+  const timeout = new Promise(resolve => setTimeout(resolve, NETWORK_TIMEOUT_MS));
 
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        }
-        return response;
-      })
+    Promise.race([networkFetch, timeout])
+      .then(response => response || caches.match(request).then(cached => cached || networkFetch))
       .catch(() =>
-        caches.match(event.request).then(cached => cached || caches.match('./index.html'))
+        caches.match(request).then(cached => {
+          if (cached) return cached;
+          if (request.mode === 'navigate') return caches.match('./index.html');
+          return Response.error();
+        })
       )
   );
 });

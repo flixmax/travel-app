@@ -6,7 +6,7 @@ Todo o texto da interface é em português do Brasil.
 ## Estrutura
 
 - `index.html`: o app inteiro (HTML + CSS + JS puro, sem framework nem build).
-- `sw.js`: service worker (busca na rede primeiro e usa o cache só quando está offline).
+- `sw.js`: service worker (busca na rede primeiro; se a rede falhar ou demorar mais de 3 s, usa o cache).
 - `manifest.json`, `icon-192.png`, `icon-512.png`: instalação como app no celular.
 - `travel_app_prototype.html`: protótipo antigo com dados simulados. **Não é usado pelo app.**
 
@@ -54,8 +54,11 @@ Todas estão na função `calcTrip()`.
 - **Passagem rodoviária é sempre reembolsável (paga pela empresa)**: o botão "Por minha conta" fica travado e reembolsa só o que passar do depositado. **Pedágio** pode ser colocado em "Por minha conta" (não soma em gastos pessoais e reembolsa no acerto só o que passar do depositado).
 - Uber, táxi e hospedagem às vezes são pagos pela empresa e às vezes pelo motorista, então o app pede
   confirmação. Almoço, janta e café vêm sugeridos como pessoais.
-- **Pergunta em aberto:** como o acerto ficou só Saldo + Bônus, os gastos reembolsáveis não afetam o
-  valor do acerto. Ainda não foi confirmado com o usuário se a empresa devolve esses gastos no acerto.
+- **Pedágio entra no acerto só pelo excedente**, seja marcado como Empresa ou Por minha conta
+  (nunca soma inteiro nos reembolsáveis: isso contava o pedágio duas vezes até a v43).
+- **Meu Mês:** Saldo Livre = Lucros das viagens pagas − Gastos do dia a dia. Os gastos pessoais das
+  viagens já saem do lucro líquido, então aparecem só como linha informativa (cinza, sem "−"), e no
+  resumo contam só as viagens pagas. A lista abaixo mostra todas as viagens do mês e marca as pendentes.
 
 ## Comportamento
 
@@ -65,12 +68,24 @@ Todas estão na função `calcTrip()`.
 - O microfone só funciona em HTTPS ou em `localhost`, então não funciona abrindo o arquivo direto.
 - `tidyTitle()` padroniza as descrições: primeira letra maiúscula e acentos comuns ("diaria" → "Diária").
 - Todo texto digitado pelo usuário passa por `escapeHtml()` antes de ir para `innerHTML`.
+- Valores em reais (voz, OCR) passam por `parseBrNumber()`: "1.050" é mil e cinquenta, não 1,05.
+- Datas continuam salvas como `dd/mm/aaaa`. Os campos usam `type="date"`; converta com
+  `setDateInput()` / `getDateInput()` (e `brToIso` / `isoToBr`). A lista ordena pela data, mais nova primeiro.
+- Leitura e gravação passam por `loadList()` / `saveList()`. Dados corrompidos não quebram o app:
+  o texto original é guardado em `<chave>_corrompido_<timestamp>`.
+- **Backup:** cartão "Backup dos dados" no fim do Meu Mês. Exportar gera um JSON
+  `{ app, version, exportedAt, trips, dailyExpenses }` (compartilha pelo celular quando dá, ou baixa o arquivo).
+  Importar substitui os dados e antes guarda os atuais em `<chave>_antes_import_<timestamp>`.
 
 ## Visual
 
-- Layout de celular (máximo de 400px), com cores roxo/azul (`#4f46e5` → `#3b82f6`).
+- Tema escuro. **Todas as cores estão nas variáveis do `:root`** no começo do `<style>`. Não escreva
+  cor solta no HTML nem no JS: use as classes `.amount.pos / .neg / .muted / .accent`, `.empty-line` etc.
+- No celular (até 480px ou instalado) o app ocupa a tela inteira, sem a moldura de "celular" que
+  aparece no computador. Respeita as áreas seguras (`env(safe-area-inset-*)`).
+- Campos com 16px (abaixo disso o iPhone dá zoom) e alvos de toque com pelo menos 40–44px (`--tap`).
 - Nas listas, os valores ficam alinhados à direita. As linhas sem botão "×" usam `.del-spacer`
-  para ocupar o mesmo espaço do "×".
+  (32px) para ocupar o mesmo espaço do "×" (40px de área de toque com margem negativa de 8px).
 - O usuário confere o resultado no celular e se incomoda com detalhes visuais fora do padrão.
 
 ## Git
