@@ -437,6 +437,33 @@
             min-height: 1em;
         }
 
+        .btn-scan-sheet {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px dashed #6366f1;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-scan-sheet:hover {
+            background: #e0e7ff;
+        }
+        .ocr-status {
+            font-size: 0.78rem;
+            color: #4b5563;
+            text-align: center;
+            margin-bottom: 10px;
+            min-height: 1em;
+        }
+
         /* Modais */
         .modal {
             position: absolute;
@@ -686,6 +713,11 @@
             <div class="modal-card">
                 <h3 id="tripModalTitle">Nova Viagem</h3>
                 <p id="tripModalSub">Preencha os dados da folha da viagem.</p>
+                <div id="scanSheetBox">
+                    <input type="file" id="sheetPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handleSheetPhoto(event)">
+                    <button type="button" id="btnScanSheet" class="btn-scan-sheet" onclick="document.getElementById('sheetPhotoInput').click()">📷 Tirar Foto da Folha</button>
+                    <div id="ocrStatus" class="ocr-status"></div>
+                </div>
                 <form id="tripForm" onsubmit="saveTrip(event)">
                     <div class="form-group">
                         <label>Destino</label>
@@ -1246,6 +1278,10 @@
             editingTripId = null;
 
             const trip = tripId !== null ? trips.find(t => t.id === tripId) : null;
+            document.getElementById('ocrStatus').innerText = '';
+            document.getElementById('sheetPhotoInput').value = '';
+            document.getElementById('scanSheetBox').style.display = trip ? 'none' : 'block';
+
             if (trip) {
                 editingTripId = trip.id;
                 document.getElementById('tripModalTitle').innerText = 'Editar Folha da Viagem';
@@ -1317,6 +1353,117 @@
             trips.push(newTrip);
             saveToStorage();
             closeTripModal();
+        }
+
+        // ---------- Leitura da Folha por Câmera (OCR) ----------
+        function loadTesseract() {
+            if (window.Tesseract) return Promise.resolve(window.Tesseract);
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                script.onload = () => resolve(window.Tesseract);
+                script.onerror = () => reject(new Error('Falha ao carregar leitor de imagem.'));
+                document.head.appendChild(script);
+            });
+        }
+
+        function parseBrNumber(str) {
+            if (!str) return null;
+            let cleaned = str.replace(/[^\d.,]/g, '');
+            if (cleaned.includes(',') && cleaned.includes('.')) {
+                cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+            } else if (cleaned.includes(',')) {
+                cleaned = cleaned.replace(',', '.');
+            }
+            const val = parseFloat(cleaned);
+            return isNaN(val) ? null : val;
+        }
+
+        function extractMoneyNear(lines, normLines, regex) {
+            const moneyRe = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+[.,]\d{2}|\d+)/i;
+            for (let i = 0; i < normLines.length; i++) {
+                if (regex.test(normLines[i])) {
+                    const after = normLines[i].replace(regex, ' ');
+                    const m = after.match(moneyRe) || lines[i].match(moneyRe) || (lines[i + 1] && lines[i + 1].match(moneyRe));
+                    if (m) {
+                        const val = parseBrNumber(m[1]);
+                        if (val !== null) return val;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function parseSheetText(text) {
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const normLines = lines.map(l => normalize(l));
+
+            const dateMatch = text.match(/(\d{2}\/\d{2}\/\d{2,4})/);
+            let destination = null;
+            for (let i = 0; i < normLines.length; i++) {
+                const m = normLines[i].match(/(?:destino|cidade|rota|local)\s*[:\-]?\s*(.+)/);
+                if (m && m[1].trim().length > 1) {
+                    const origMatch = lines[i].match(/[:\-]\s*(.+)/);
+                    destination = (origMatch ? origMatch[1] : m[1]).trim();
+                    break;
+                }
+            }
+
+            return {
+                destination,
+                date: dateMatch ? dateMatch[1] : null,
+                advance: extractMoneyNear(lines, normLines, /(adiantamento|adiant\.?)/),
+                toll: extractMoneyNear(lines, normLines, /pedagio/),
+                busTicket: extractMoneyNear(lines, normLines, /(passagem|rodoviaria)/),
+                bonus: extractMoneyNear(lines, normLines, /(bonus|premiacao)/),
+                remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/)
+            };
+        }
+
+        async function handleSheetPhoto(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const statusEl = document.getElementById('ocrStatus');
+            const btn = document.getElementById('btnScanSheet');
+            btn.disabled = true;
+            statusEl.style.color = '#4338ca';
+            statusEl.innerText = '⏳ Carregando leitor de folha...';
+
+            try {
+                const Tesseract = await loadTesseract();
+                const result = await Tesseract.recognize(file, 'por', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round((m.progress || 0) * 100);
+                            statusEl.innerText = `⏳ Lendo a folha... ${pct}%`;
+                        }
+                    }
+                });
+
+                const data = parseSheetText(result.data.text || '');
+                let filled = 0;
+                if (data.destination) { document.getElementById('tripDest').value = tidyTitle(data.destination); filled++; }
+                if (data.date) { document.getElementById('tripDate').value = data.date; filled++; }
+                if (data.advance !== null) { document.getElementById('tripAdvance').value = data.advance.toFixed(2); filled++; }
+                if (data.toll !== null) { document.getElementById('tripToll').value = data.toll.toFixed(2); filled++; }
+                if (data.busTicket !== null) { document.getElementById('tripBusTicket').value = data.busTicket.toFixed(2); filled++; }
+                if (data.bonus !== null) { document.getElementById('tripBonus').value = data.bonus.toFixed(2); filled++; }
+                if (data.remainder !== null) { document.getElementById('tripRemainder').value = data.remainder.toFixed(2); filled++; }
+
+                if (filled > 0) {
+                    statusEl.style.color = '#059669';
+                    statusEl.innerText = `✅ ${filled} campo(s) preenchido(s)! Confira os valores abaixo.`;
+                } else {
+                    statusEl.style.color = '#b45309';
+                    statusEl.innerText = '⚠️ Não consegui identificar os campos na foto. Tente outra foto mais nítida ou preencha abaixo.';
+                }
+            } catch (err) {
+                statusEl.style.color = '#dc2626';
+                statusEl.innerText = '❌ Erro ao ler a foto (verifique a internet). Preencha manualmente.';
+            } finally {
+                btn.disabled = false;
+                event.target.value = '';
+            }
         }
 
         // ---------- Reconhecimento de Voz ----------
