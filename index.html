@@ -723,6 +723,10 @@
                     <input type="file" id="sheetPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handleSheetPhoto(event)">
                     <button type="button" id="btnScanSheet" class="btn-scan-sheet" onclick="document.getElementById('sheetPhotoInput').click()">📷 Tirar Foto da Folha</button>
                     <div id="ocrStatus" class="ocr-status"></div>
+                    <details id="ocrDebugBox" style="display: none; margin-bottom: 10px; font-size: 0.72rem; color: #4b5563;">
+                        <summary style="cursor: pointer; text-align: center; color: #6366f1;">Ver texto lido da foto</summary>
+                        <pre id="ocrRawText" style="white-space: pre-wrap; background: #f3f4f6; padding: 8px; border-radius: 8px; margin-top: 6px; max-height: 120px; overflow-y: auto;"></pre>
+                    </details>
                 </div>
                 <form id="tripForm" onsubmit="saveTrip(event)">
                     <div class="form-group">
@@ -1292,6 +1296,8 @@
 
             const trip = tripId !== null ? trips.find(t => t.id === tripId) : null;
             document.getElementById('ocrStatus').innerText = '';
+            document.getElementById('ocrDebugBox').style.display = 'none';
+            document.getElementById('ocrRawText').innerText = '';
             document.getElementById('sheetPhotoInput').value = '';
             document.getElementById('scanSheetBox').style.display = trip ? 'none' : 'block';
 
@@ -1499,6 +1505,8 @@
                     }
                 }
             });
+            // PSM 6 lê linha por linha da esquerda para a direita sem quebrar colunas da tabela
+            await ocrWorker.setParameters({ tessedit_pageseg_mode: '6' });
             return ocrWorker;
         }
 
@@ -1517,7 +1525,10 @@
                 const worker = await getOcrWorker(statusEl);
                 const result = await worker.recognize(processedBlob);
 
-                const data = parseSheetText(result.data.text || '');
+                const rawText = result.data.text || '';
+                document.getElementById('ocrRawText').innerText = rawText;
+                document.getElementById('ocrDebugBox').style.display = rawText ? 'block' : 'none';
+                const data = parseSheetText(rawText);
                 const now = new Date();
                 const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
                 let filled = 0;
