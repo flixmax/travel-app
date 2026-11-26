@@ -831,6 +831,10 @@
                         <span>Pessoais</span>
                         <span id="det-total-personal">R$ 0,00</span>
                     </div>
+                    <div id="det-covered-row" class="sub-line" style="display: none;">
+                        <span>Já depositados (Pedágio / Passagem)</span>
+                        <span id="det-total-covered">R$ 0,00</span>
+                    </div>
                 </div>
 
                 <!-- Bloco 4: Placar Final -->
@@ -1135,16 +1139,16 @@
         function calcTrip(trip) {
             const extraIncomes = sum(trip.incomes);
             const busTicket = trip.busTicket || 0;
-            const reimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable'));
             const otherReimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable' && !isBusTicket(e.title)));
-            const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && !isToll(e.title)));
-            const tollInPersonal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && isToll(e.title)));
+            const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && !isToll(e.title) && !isBusTicket(e.title)));
             const tollSpent = sum(trip.expenses.filter(e => isToll(e.title)));
             const tollExcess = Math.max(0, tollSpent - (trip.toll || 0));
             const busTicketSpent = sum(trip.expenses.filter(e => e.type === 'reimbursable' && isBusTicket(e.title)));
             const busTicketExcess = Math.max(0, busTicketSpent - busTicket);
+            const reimbursable = otherReimbursable + busTicketExcess;
             const deposited = (trip.advance || 0) + (trip.toll || 0) + extraIncomes;
-            const totalExpenses = reimbursable + personal + tollInPersonal;
+            const totalExpenses = sum(trip.expenses);
+            const coveredByDeposit = Math.max(0, totalExpenses - reimbursable - personal);
             const remainingDeposited = deposited - totalExpenses;
             const settlement = (trip.remainder || 0) + (trip.bonus || 0) + otherReimbursable + busTicketExcess + tollExcess;
             return {
@@ -1158,6 +1162,7 @@
                 reimbursable,
                 otherReimbursable,
                 personal,
+                coveredByDeposit,
                 totalExpenses,
                 remainingDeposited,
                 settlement,
@@ -1171,7 +1176,7 @@
             return /pedagio/.test(normalize(title));
         }
         function isBusTicket(title) {
-            return /(passagem|onibus)/.test(normalize(title));
+            return /(passagem(?!\s+urbana)|onibus)/.test(normalize(title));
         }
         function isCompanyOnly(title) {
             return isBusTicket(title);
@@ -1301,6 +1306,8 @@
             document.getElementById('det-total-expenses').innerText = formatMoney(c.totalExpenses);
             document.getElementById('det-total-reimb').innerText = formatMoney(c.reimbursable);
             document.getElementById('det-total-personal').innerText = formatMoney(c.personal);
+            document.getElementById('det-total-covered').innerText = formatMoney(c.coveredByDeposit);
+            document.getElementById('det-covered-row').style.display = c.coveredByDeposit > 0 ? 'flex' : 'none';
             document.getElementById('det-remaining-deposited').innerText = formatMoney(c.remainingDeposited);
             document.getElementById('deposit-summary-box').classList.toggle('negative', c.remainingDeposited < 0);
 
