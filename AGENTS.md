@@ -46,11 +46,11 @@ Formato de uma viagem:
 Todas estão na função `calcTrip()`.
 
 - **Total Já Depositado** = Adiantamento + Pedágio + entradas extras (a passagem rodoviária já está inclusa no valor depositado, então não soma de novo).
-- **Acerto a Receber** = Saldo + Bônus sem ocorrência + excedente da passagem rodoviária (`max(0, gastoComPassagem - busTicket)`). Os demais gastos **não** entram nessa conta.
-- **Total de Gastos** = gastos reembolsáveis + gastos pessoais (aparece abaixo dos gastos pessoais), com **Restante do Depositado** = `Total Já Depositado - Total de Gastos`.
+- **Acerto a Receber** = Saldo + Bônus sem ocorrência + excedente da passagem rodoviária (`max(0, gastoComPassagem - busTicket)`) + excedente do pedágio (`max(0, gastoComPedagio - toll)`). Os demais gastos **não** entram nessa conta.
+- **Total de Gastos** = gastos reembolsáveis + gastos pessoais + pedágio em pessoais (aparece abaixo dos gastos pessoais), com **Restante do Depositado** = `Total Já Depositado - Total de Gastos`. Pedágio não entra na soma de `Pessoais`.
 - **Lucro Líquido da Viagem** = `Acerto a Receber + Restante do Depositado + Gastos Reembolsáveis` (exibido logo abaixo de Acerto a Receber e no card da tela inicial).
 - O "Total Pendente" da tela inicial soma o acerto das viagens com status "Aguardando Acerto".
-- **Pedágio e Passagem rodoviária são sempre reembolsáveis (pagos pela empresa)**: o botão "Por minha conta" fica travado. Na passagem rodoviária, a empresa só reembolsa no acerto o que passar do valor depositado.
+- **Passagem rodoviária é sempre reembolsável (paga pela empresa)**: o botão "Por minha conta" fica travado e reembolsa só o que passar do depositado. **Pedágio** pode ser colocado em "Por minha conta" (não soma em gastos pessoais e reembolsa no acerto só o que passar do depositado).
 - Uber, táxi e hospedagem às vezes são pagos pela empresa e às vezes pelo motorista, então o app pede
   confirmação. Almoço, janta e café vêm sugeridos como pessoais.
 - **Pergunta em aberto:** como o acerto ficou só Saldo + Bônus, os gastos reembolsáveis não afetam o

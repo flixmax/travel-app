@@ -871,18 +871,23 @@
             const extraIncomes = sum(trip.incomes);
             const busTicket = trip.busTicket || 0;
             const reimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable'));
-            const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable'));
+            const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && !isToll(e.title)));
+            const tollInPersonal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && isToll(e.title)));
+            const tollSpent = sum(trip.expenses.filter(e => isToll(e.title)));
+            const tollExcess = Math.max(0, tollSpent - (trip.toll || 0));
             const busTicketSpent = sum(trip.expenses.filter(e => e.type === 'reimbursable' && isBusTicket(e.title)));
             const busTicketExcess = Math.max(0, busTicketSpent - busTicket);
             const deposited = (trip.advance || 0) + (trip.toll || 0) + extraIncomes;
-            const totalExpenses = reimbursable + personal;
+            const totalExpenses = reimbursable + personal + tollInPersonal;
             const remainingDeposited = deposited - totalExpenses;
-            const settlement = (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess;
+            const settlement = (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess + tollExcess;
             return {
                 extraIncomes,
                 busTicket,
                 busTicketSpent,
                 busTicketExcess,
+                tollSpent,
+                tollExcess,
                 deposited,
                 reimbursable,
                 personal,
@@ -894,7 +899,7 @@
         }
 
         // ---------- Regras de tipo de gasto ----------
-        // Pedágio e passagem rodoviária são SEMPRE pagos pela empresa.
+        // Passagem rodoviária é paga pela empresa; pedágio pode ir em pessoais (não soma em pessoais e reembolsa só o excedente).
         function isToll(title) {
             return /pedagio/.test(normalize(title));
         }
@@ -902,7 +907,7 @@
             return /(passagem|onibus)/.test(normalize(title));
         }
         function isCompanyOnly(title) {
-            return isToll(title) || isBusTicket(title);
+            return isBusTicket(title);
         }
         // Gastos que às vezes são da empresa, às vezes por minha conta: o app pergunta.
         function isAmbiguous(title) {
@@ -911,6 +916,7 @@
         // Sugestão inicial de tipo pela descrição
         function suggestType(title) {
             const t = normalize(title);
+            if (isToll(t)) return 'personal';
             if (isCompanyOnly(t)) return 'reimbursable';
             if (/(almoco|janta|jantar|cafe|lanche|refeicao|marmita|agua|refrigerante|sorvete)/.test(t)) return 'personal';
             if (/(uber|taxi|99|hotel|hospedagem|pousada|peca|conserto|oficina|borracharia|combustivel|diesel|lavagem|estacionamento)/.test(t)) return 'reimbursable';
@@ -1031,10 +1037,13 @@
             document.getElementById('det-remaining-deposited').innerText = formatMoney(c.remainingDeposited);
             document.getElementById('deposit-summary-box').classList.toggle('negative', c.remainingDeposited < 0);
 
-            // Acerto = Saldo + Bônus sem ocorrência (+ excedente da passagem rodoviária, se houver)
+            // Acerto = Saldo + Bônus sem ocorrência (+ excedentes de passagem/pedágio, se houver)
             document.getElementById('det-balance').innerText = formatMoney(c.settlement);
-            document.getElementById('det-balance-formula').innerText = c.busTicketExcess > 0
-                ? `Saldo + Bônus sem ocorrência + Excedente de passagem (${formatMoney(c.busTicketExcess)})`
+            const extras = [];
+            if (c.busTicketExcess > 0) extras.push(`Excedente de passagem (${formatMoney(c.busTicketExcess)})`);
+            if (c.tollExcess > 0) extras.push(`Excedente de pedágio (${formatMoney(c.tollExcess)})`);
+            document.getElementById('det-balance-formula').innerText = extras.length > 0
+                ? 'Saldo + Bônus sem ocorrência + ' + extras.join(' + ')
                 : 'Saldo + Bônus sem ocorrência';
             const netEl = document.getElementById('det-net-profit');
             netEl.innerText = formatMoney(c.netProfit);
@@ -1099,9 +1108,7 @@
             if (isCompanyOnly(title)) {
                 personalBtn.disabled = true;
                 selectExpenseType('reimbursable');
-                hint.innerText = isToll(title)
-                    ? '🔒 Pedágio é sempre reembolsável.'
-                    : '🔒 Passagem rodoviária é paga pela empresa (reembolsa só o que passar do depositado).';
+                hint.innerText = '🔒 Passagem rodoviária é paga pela empresa (reembolsa só o que passar do depositado).';
                 return;
             }
             personalBtn.disabled = false;
@@ -1110,9 +1117,13 @@
                 const suggestion = suggestType(title);
                 if (suggestion) selectExpenseType(suggestion);
             }
-            hint.innerText = isAmbiguous(title)
-                ? '⚠️ Uber/táxi/hospedagem: confirme quem pagou — a empresa ou você.'
-                : '';
+            if (isToll(title)) {
+                hint.innerText = 'ℹ️ Pedágio: não entra na soma de gastos pessoais; reembolsa só o que passar do depositado.';
+            } else {
+                hint.innerText = isAmbiguous(title)
+                    ? '⚠️ Uber/táxi/hospedagem: confirme quem pagou — a empresa ou você.'
+                    : '';
+            }
         }
 
         // options: { index } para editar, ou { title, amount, fromVoice } para pré-preencher
