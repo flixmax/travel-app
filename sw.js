@@ -1,5 +1,5 @@
 // Ao alterar arquivos do app, aumente a versão para forçar a limpeza do cache antigo.
-const CACHE_NAME = 'viagens-app-v28';
+const CACHE_NAME = 'viagens-app-v30';
 const urlsToCache = [
   './',
   './index.html',

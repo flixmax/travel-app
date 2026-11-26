@@ -47,9 +47,9 @@ Formato de uma viagem:
 Todas estão na função `calcTrip()`.
 
 - **Total Já Depositado** = Adiantamento + Pedágio + entradas extras (a passagem rodoviária já está inclusa no valor depositado, então não soma de novo).
-- **Acerto a Receber** = Saldo + Bônus sem ocorrência + excedente da passagem rodoviária (`max(0, gastoComPassagem - busTicket)`) + excedente do pedágio (`max(0, gastoComPedagio - toll)`). Os demais gastos **não** entram nessa conta.
+- **Acerto a Receber** = Saldo + Bônus sem ocorrência + Gastos Reembolsáveis (exceto passagem rodoviária) + excedente da passagem rodoviária (`max(0, gastoComPassagem - busTicket)`) + excedente do pedágio (`max(0, gastoComPedagio - toll)`).
 - **Total de Gastos** = gastos reembolsáveis + gastos pessoais + pedágio em pessoais (aparece abaixo dos gastos pessoais), com **Restante do Depositado** = `Total Já Depositado - Total de Gastos`. Pedágio não entra na soma de `Pessoais`.
-- **Lucro Líquido da Viagem** = `Acerto a Receber + Restante do Depositado + Gastos Reembolsáveis` (exibido logo abaixo de Acerto a Receber e no card da tela inicial).
+- **Lucro Líquido da Viagem** = `Acerto a Receber + Restante do Depositado` (como os reembolsáveis já entram no Acerto a Receber, o lucro líquido soma por lá).
 - O "Total Pendente" da tela inicial soma o acerto das viagens com status "Aguardando Acerto".
 - **Passagem rodoviária é sempre reembolsável (paga pela empresa)**: o botão "Por minha conta" fica travado e reembolsa só o que passar do depositado. **Pedágio** pode ser colocado em "Por minha conta" (não soma em gastos pessoais e reembolsa no acerto só o que passar do depositado).
 - Uber, táxi e hospedagem às vezes são pagos pela empresa e às vezes pelo motorista, então o app pede

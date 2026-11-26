@@ -234,9 +234,14 @@
         .placar-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            gap: 10px;
             font-size: 0.95rem;
             font-weight: bold;
             color: #312e81;
+        }
+        .placar-row span:last-child {
+            white-space: nowrap;
         }
         .fab {
             position: absolute;
@@ -720,7 +725,7 @@
                             <span>Lucro Líquido da Viagem:</span>
                             <span id="det-net-profit" style="font-size: 1.15rem; color: #047857;">R$ 0,00</span>
                         </div>
-                        <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 2px;">Acerto a Receber + Restante do Depositado + Reembolsáveis</div>
+                        <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 2px;">Acerto a Receber + Restante do Depositado</div>
                     </div>
                     <div onclick="openTripModal(currentTripId)" title="Toque para editar" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #a5b4fc; cursor: pointer;">
                         <div class="placar-row">
@@ -972,6 +977,7 @@
             const extraIncomes = sum(trip.incomes);
             const busTicket = trip.busTicket || 0;
             const reimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable'));
+            const otherReimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable' && !isBusTicket(e.title)));
             const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && !isToll(e.title)));
             const tollInPersonal = sum(trip.expenses.filter(e => e.type !== 'reimbursable' && isToll(e.title)));
             const tollSpent = sum(trip.expenses.filter(e => isToll(e.title)));
@@ -981,7 +987,7 @@
             const deposited = (trip.advance || 0) + (trip.toll || 0) + extraIncomes;
             const totalExpenses = reimbursable + personal + tollInPersonal;
             const remainingDeposited = deposited - totalExpenses;
-            const settlement = (trip.remainder || 0) + (trip.bonus || 0) + busTicketExcess + tollExcess;
+            const settlement = (trip.remainder || 0) + (trip.bonus || 0) + otherReimbursable + busTicketExcess + tollExcess;
             return {
                 extraIncomes,
                 busTicket,
@@ -991,11 +997,12 @@
                 tollExcess,
                 deposited,
                 reimbursable,
+                otherReimbursable,
                 personal,
                 totalExpenses,
                 remainingDeposited,
                 settlement,
-                netProfit: settlement + remainingDeposited + reimbursable
+                netProfit: settlement + remainingDeposited
             };
         }
 
@@ -1065,7 +1072,7 @@
                             <span>${formatMoney(c.netProfit)}</span>
                         </div>
                         <div class="detail-row highlight">
-                            <span>${c.busTicketExcess > 0 ? 'Acerto (Saldo + Bônus + Passagem):' : 'Acerto (Saldo + Bônus):'}</span>
+                            <span>${(c.otherReimbursable > 0 || c.busTicketExcess > 0 || c.tollExcess > 0) ? 'Acerto (Saldo + Bônus + Reemb.):' : 'Acerto (Saldo + Bônus):'}</span>
                             <span style="color: #059669;">${formatMoney(c.settlement)}</span>
                         </div>
                     </div>
@@ -1138,9 +1145,10 @@
             document.getElementById('det-remaining-deposited').innerText = formatMoney(c.remainingDeposited);
             document.getElementById('deposit-summary-box').classList.toggle('negative', c.remainingDeposited < 0);
 
-            // Acerto = Saldo + Bônus sem ocorrência (+ excedentes de passagem/pedágio, se houver)
+            // Acerto = Saldo + Bônus sem ocorrência + Reembolsáveis (+ excedentes de passagem/pedágio)
             document.getElementById('det-balance').innerText = formatMoney(c.settlement);
             const extras = [];
+            if (c.otherReimbursable > 0) extras.push(`Reembolsáveis (${formatMoney(c.otherReimbursable)})`);
             if (c.busTicketExcess > 0) extras.push(`Excedente de passagem (${formatMoney(c.busTicketExcess)})`);
             if (c.tollExcess > 0) extras.push(`Excedente de pedágio (${formatMoney(c.tollExcess)})`);
             document.getElementById('det-balance-formula').innerText = extras.length > 0
