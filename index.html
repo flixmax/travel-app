@@ -1400,12 +1400,22 @@
 
             const dateMatch = text.match(/(\d{2}\/\d{2}\/\d{2,4})/);
             let destination = null;
-            for (let i = 0; i < normLines.length; i++) {
-                const m = normLines[i].match(/(?:destino|cidade|rota|local)\s*[:\-]?\s*(.+)/);
-                if (m && m[1].trim().length > 1) {
-                    const origMatch = lines[i].match(/[:\-]\s*(.+)/);
-                    destination = (origMatch ? origMatch[1] : m[1]).trim();
+            for (let i = 0; i < lines.length; i++) {
+                // Formato típico da folha: "Curitiba x Pouso Alegre"
+                const routeMatch = lines[i].match(/([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.-]{1,30}\s+[xX]\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ\s.-]{1,30})/);
+                if (routeMatch) {
+                    destination = routeMatch[1].replace(/\s+[xX]\s+/, ' x ').trim();
                     break;
+                }
+            }
+            if (!destination) {
+                for (let i = 0; i < normLines.length; i++) {
+                    const m = normLines[i].match(/(?:destino|cidade|rota|local)\s*[:\-]?\s*(.+)/);
+                    if (m && m[1].trim().length > 1) {
+                        const origMatch = lines[i].match(/[:\-]\s*(.+)/);
+                        destination = (origMatch ? origMatch[1] : m[1]).trim();
+                        break;
+                    }
                 }
             }
 
@@ -1415,7 +1425,7 @@
                 advance: extractMoneyNear(lines, normLines, /(adiantamento|adiant\.?)/),
                 toll: extractMoneyNear(lines, normLines, /pedagio/),
                 busTicket: extractMoneyNear(lines, normLines, /(passagem|rodoviaria)/),
-                bonus: extractMoneyNear(lines, normLines, /(bonus|premiacao)/),
+                bonus: extractMoneyNear(lines, normLines, /(bonus|premiacao|programa\s+de\s+bonificacao|bonificacao)/),
                 remainder: extractMoneyNear(lines, normLines, /(saldo|acerto)/)
             };
         }
@@ -1441,9 +1451,11 @@
                 });
 
                 const data = parseSheetText(result.data.text || '');
+                const now = new Date();
+                const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
                 let filled = 0;
                 if (data.destination) { document.getElementById('tripDest').value = tidyTitle(data.destination); filled++; }
-                if (data.date) { document.getElementById('tripDate').value = data.date; filled++; }
+                document.getElementById('tripDate').value = todayStr; filled++;
                 if (data.advance !== null) { document.getElementById('tripAdvance').value = data.advance.toFixed(2); filled++; }
                 if (data.toll !== null) { document.getElementById('tripToll').value = data.toll.toFixed(2); filled++; }
                 if (data.busTicket !== null) { document.getElementById('tripBusTicket').value = data.busTicket.toFixed(2); filled++; }
