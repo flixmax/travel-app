@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Viagens e Reembolsos</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .phone-container {
+            width: 100%;
+            max-width: 400px;
+            background: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 800px;
+            max-height: 90vh;
+            border: 8px solid #222;
+            position: relative;
+        }
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .app-header {
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            color: white;
+            padding: 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .app-header h1 {
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .summary-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+        .summary-card p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        .summary-card h2 {
+            font-size: 1.6rem;
+            margin-top: 5px;
+        }
+        .app-content {
+            flex: 1;
+            padding: 20px;
+            padding-bottom: 90px;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #4b5563;
+        }
+        .trip-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .trip-card:active {
+            transform: scale(0.98);
+        }
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .trip-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1f2937;
+        }
+        .trip-date {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .badge.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .badge.paid {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .trip-details {
+            border-top: 1px solid #f3f4f6;
+            padding-top: 10px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            color: #4b5563;
+        }
+        .detail-row.highlight {
+            font-weight: 600;
+            color: #1f2937;
+            margin-top: 6px;
+            border-top: 1px dashed #e5e7eb;
+            padding-top: 6px;
+        }
+        
+        .card-section {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .card-section h3 {
+            font-size: 0.9rem;
+            color: #4f46e5;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.85rem;
+        }
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+        .deposit-summary {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #166534;
+        }
+        .placar-box {
+            background: #e0e7ff;
+            border: 1px solid #c7d2fe;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .placar-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #312e81;
+        }
+        .fab {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            cursor: pointer;
+            border: none;
+            z-index: 10;
+        }
+        .fab:hover {
+            background: #4338ca;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-delete:hover {
+            background: #fecaca;
+        }
+
+        /* Modais */
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 340px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .mic-icon {
+            width: 70px;
+            height: 70px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            margin: 0 auto 15px auto;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .modal-card h3 {
+            font-size: 1.1rem;
+            color: #1f2937;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .modal-card p {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #4b5563;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-cancel {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        
+        <!-- TELA 1: LISTA DE VIAGENS -->
+        <div id="screen-list" class="screen active">
+            <div class="app-header">
+                <h1>Olá, Viajante 👋</h1>
+                <div class="summary-card">
+                    <p>Total Pendente de Receber (Acertos)</p>
+                    <h2 id="total-pending">R$ 0,00</h2>
+                </div>
+            </div>
+
+            <div class="app-content">
+                <div class="section-title">Suas Viagens</div>
+                <div id="trips-container">
+                    <!-- Preenchido via JavaScript -->
+                </div>
+            </div>
+
+            <button class="fab" onclick="openTripModal()" title="Nova Viagem">+</button>
+        </div>
+
+
+        <!-- TELA 2: DETALHES / PLACAR DA VIAGEM -->
+        <div id="screen-detail" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="showList()">← Voltar</button>
+                <h1 id="detail-title">Destino</h1>
+                <div id="detail-subtitle" style="font-size: 0.8rem; opacity: 0.9; margin-top: 4px;">Data - Status</div>
+            </div>
+
+            <div class="app-content">
+                <!-- Total Já Depositado no Topo da Tela -->
+                <div class="deposit-summary">
+                    <span>Total Já Depositado:</span>
+                    <span id="det-deposited" style="font-size: 1rem;">R$ 0,00</span>
+                </div>
+
+                <!-- Bloco 1: Entradas / Folha -->
+                <div class="card-section">
+                    <h3>1. Folha da Viagem (Entradas)</h3>
+                    <div class="expense-item">
+                        <span>Adiantamento</span>
+                        <span id="det-advance" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                    </div>
+                    <div class="expense-item">
+                        <span>Pedágio</span>
+                        <span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                    </div>
+                    <div class="expense-item">
+                        <span>Bônus sem ocorrência</span>
+                        <span id="det-bonus" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                    </div>
+                    <div class="expense-item" style="margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px;">
+                        <span>Saldo</span>
+                        <span id="det-remainder" style="font-weight: 600; color: #2563eb;">+ R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Bloco 2: Gastos Reembolsáveis (Afetam o Acerto) -->
+                <div class="card-section">
+                    <h3>2. Gastos Reembolsáveis (Afetam o Acerto)</h3>
+                    <div id="reimbursable-list">
+                        <!-- Itens dinâmicos -->
+                    </div>
+                </div>
+
+                <!-- Bloco 3: Gastos Pessoais (NÃO afetam o Acerto) -->
+                <div class="card-section" style="border-color: #cbd5e1; background: #f8fafc;">
+                    <h3 style="color: #64748b;">3. Meus Gastos Pessoais (Por minha conta)</h3>
+                    <div id="personal-list">
+                        <!-- Itens dinâmicos -->
+                    </div>
+                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px; font-style: italic;">
+                        * Almoço, janta e gastos particulares não entram no acerto.
+                    </div>
+                </div>
+
+                <!-- Bloco 4: Placar Final -->
+                <div class="placar-box">
+                    <div style="font-size: 0.8rem; color: #4338ca; margin-bottom: 5px;">RESULTADO DO ACERTO COM A EMPRESA</div>
+                    <div class="placar-row">
+                        <span>Saldo a Receber:</span>
+                        <span id="det-balance" style="font-size: 1.2rem; color: #047857;">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Botão de Excluir Viagem -->
+                <button class="btn-delete" onclick="deleteCurrentTrip()">🗑️ Excluir Viagem</button>
+            </div>
+
+            <!-- Botão do Microfone para Voz -->
+            <button class="fab" onclick="startVoiceRecognition()" title="Adicionar por Voz">🎤</button>
+        </div>
+
+
+        <!-- MODAL: NOVA VIAGEM -->
+        <div id="tripModal" class="modal">
+            <div class="modal-card">
+                <h3>Nova Viagem</h3>
+                <p>Preencha os dados da folha da viagem.</p>
+                <form id="tripForm" onsubmit="saveNewTrip(event)">
+                    <div class="form-group">
+                        <label>Destino</label>
+                        <input type="text" id="tripDest" placeholder="Ex: Campinas - SP" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="text" id="tripDate" placeholder="Ex: 26/11/2026" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Adiantamento (R$)</label>
+                        <input type="number" step="0.01" id="tripAdvance" placeholder="1050.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Pedágio (R$)</label>
+                        <input type="number" step="0.01" id="tripToll" placeholder="200.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bônus Previsto (R$)</label>
+                        <input type="number" step="0.01" id="tripBonus" placeholder="300.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Saldo (R$)</label>
+                        <input type="number" step="0.01" id="tripRemainder" placeholder="450.00" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" onclick="closeTripModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Viagem</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- MODAL DE GRAVAÇÃO DE VOZ -->
+        <div id="voiceModal" class="modal">
+            <div class="modal-card" style="text-align: center;">
+                <div class="mic-icon">🎤</div>
+                <h3>Ouvindo...</h3>
+                <p id="voice-status">Dite o gasto, ex: <br><em>"Gastei 45 de almoço"</em> ou <br><em>"Uber 30"</em></p>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" onclick="stopVoiceRecognition()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let trips = JSON.parse(localStorage.getItem('viagens_data')) || [
+            {
+                id: 1,
+                destination: "São Paulo - SP",
+                date: "15/11/2026",
+                status: "Aguardando Acerto",
+                advance: 1050,
+                remainder: 450,
+                toll: 200,
+                bonus: 300,
+                expenses: [
+                    { title: "Uber Hotel", amount: 35, type: "reimbursable" },
+                    { title: "Hospedagem Extra", amount: 565, type: "reimbursable" },
+                    { title: "Almoço", amount: 45, type: "personal" },
+                    { title: "Janta", amount: 55, type: "personal" }
+                ]
+            }
+        ];
+
+        let currentTripId = null;
+
+        function saveToStorage() {
+            localStorage.setItem('viagens_data', JSON.stringify(trips));
+            renderTrips();
+        }
+
+        function formatMoney(val) {
+            return 'R$ ' + val.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function renderTrips() {
+            const container = document.getElementById('trips-container');
+            container.innerHTML = '';
+            let totalPending = 0;
+
+            trips.forEach(trip => {
+                let totalIncome = (trip.advance || 0) + (trip.remainder || 0) + (trip.toll || 0) + (trip.bonus || 0);
+                let reimbursableTotal = trip.expenses
+                    .filter(e => e.type === 'reimbursable')
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                let balance = totalIncome - reimbursableTotal;
+                if (trip.status === "Aguardando Acerto") {
+                    totalPending += balance;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'trip-card';
+                card.onclick = () => openDetail(trip.id);
+                card.innerHTML = `
+                    <div class="trip-header">
+                        <div>
+                            <div class="trip-title">${trip.destination}</div>
+                            <div class="trip-date">${trip.date}</div>
+                        </div>
+                        <span class="badge ${trip.status === 'Aguardando Acerto' ? 'pending' : 'paid'}">${trip.status}</span>
+                    </div>
+                    <div class="trip-details">
+                        <div class="detail-row">
+                            <span>Total Entradas (Folha + Bônus):</span>
+                            <span>${formatMoney(totalIncome)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Gastos Reembolsáveis:</span>
+                            <span>- ${formatMoney(reimbursableTotal)}</span>
+                        </div>
+                        <div class="detail-row highlight">
+                            <span>Saldo Final a Receber:</span>
+                            <span style="color: #059669;">${formatMoney(balance)}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('total-pending').innerText = formatMoney(totalPending);
+        }
+
+        function openDetail(id) {
+            currentTripId = id;
+            const trip = trips.find(t => t.id === id);
+            if (!trip) return;
+
+            document.getElementById('detail-title').innerText = trip.destination;
+            document.getElementById('detail-subtitle').innerText = `${trip.date} - Status: ${trip.status}`;
+
+            document.getElementById('det-advance').innerText = '+ ' + formatMoney(trip.advance || 0);
+            document.getElementById('det-toll').innerText = '+ ' + formatMoney(trip.toll || 0);
+            document.getElementById('det-bonus').innerText = '+ ' + formatMoney(trip.bonus || 0);
+            document.getElementById('det-remainder').innerText = '+ ' + formatMoney(trip.remainder || 0);
+
+            // Valor depositado inicialmente (Adiantamento + Pedágio) no TOPO
+            let deposited = (trip.advance || 0) + (trip.toll || 0);
+            document.getElementById('det-deposited').innerText = formatMoney(deposited);
+
+            let totalIncome = (trip.advance || 0) + (trip.remainder || 0) + (trip.toll || 0) + (trip.bonus || 0);
+
+            // Render expenses
+            const reimbList = document.getElementById('reimbursable-list');
+            reimbList.innerHTML = '';
+            let reimbTotal = 0;
+
+            const personalList = document.getElementById('personal-list');
+            personalList.innerHTML = '';
+
+            trip.expenses.forEach(exp => {
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                if (exp.type === 'reimbursable') {
+                    reimbTotal += exp.amount;
+                    item.innerHTML = `<span>${exp.title}</span><span style="color: #dc2626;">- ${formatMoney(exp.amount)}</span>`;
+                    reimbList.appendChild(item);
+                } else {
+                    item.innerHTML = `<span>${exp.title}</span><span style="color: #64748b;">${formatMoney(exp.amount)}</span>`;
+                    personalList.appendChild(item);
+                }
+            });
+
+            if (reimbList.children.length === 0) {
+                reimbList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto reembolsável registrado.</div>';
+            }
+            if (personalList.children.length === 0) {
+                personalList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal registrado.</div>';
+            }
+
+            let balance = totalIncome - reimbTotal;
+            document.getElementById('det-balance').innerText = formatMoney(balance);
+
+            document.getElementById('screen-list').classList.remove('active');
+            document.getElementById('screen-detail').classList.add('active');
+        }
+
+        function deleteCurrentTrip() {
+            if (confirm("Tem certeza que deseja excluir esta viagem?")) {
+                trips = trips.filter(t => t.id !== currentTripId);
+                saveToStorage();
+                showList();
+            }
+        }
+
+        function showList() {
+            document.getElementById('screen-detail').classList.remove('active');
+            document.getElementById('screen-list').classList.add('active');
+            renderTrips();
+        }
+
+        function openTripModal() {
+            document.getElementById('tripModal').classList.add('active');
+        }
+
+        function closeTripModal() {
+            document.getElementById('tripModal').classList.remove('active');
+        }
+
+        function saveNewTrip(e) {
+            e.preventDefault();
+            const dest = document.getElementById('tripDest').value;
+            const date = document.getElementById('tripDate').value;
+            const adv = parseFloat(document.getElementById('tripAdvance').value) || 0;
+            const toll = parseFloat(document.getElementById('tripToll').value) || 0;
+            const bonus = parseFloat(document.getElementById('tripBonus').value) || 0;
+            const remainder = parseFloat(document.getElementById('tripRemainder').value) || 0;
+
+            const newTrip = {
+                id: Date.now(),
+                destination: dest,
+                date: date,
+                status: "Aguardando Acerto",
+                advance: adv,
+                remainder: remainder,
+                toll: toll,
+                bonus: bonus,
+                expenses: []
+            };
+
+            trips.push(newTrip);
+            saveToStorage();
+            closeTripModal();
+            document.getElementById('tripForm').reset();
+        }
+
+        // Reconhecimento de Voz Real
+        let recognition = null;
+        function startVoiceRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert('Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome no Android.');
+                return;
+            }
+
+            document.getElementById('voiceModal').classList.add('active');
+            recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript.toLowerCase();
+                processVoiceCommand(speechResult);
+                stopVoiceRecognition();
+            };
+
+            recognition.onerror = function(event) {
+                document.getElementById('voice-status').innerText = 'Não entendi. Tente novamente.';
+                setTimeout(stopVoiceRecognition, 2000);
+            };
+
+            recognition.onend = function() {
+                // Fechou
+            };
+
+            recognition.start();
+        }
+
+        function stopVoiceRecognition() {
+            if (recognition) {
+                try { recognition.stop(); } catch(e){}
+            }
+            document.getElementById('voiceModal').classList.remove('active');
+        }
+
+        function processVoiceCommand(text) {
+            const numbers = text.match(/\d+([.,]\d+)?/);
+            if (!numbers) {
+                alert(`Ouvi: "${text}"\nNão consegui identificar o valor em dinheiro.`);
+                return;
+            }
+
+            const amount = parseFloat(numbers[0].replace(',', '.'));
+            let title = text.replace(numbers[0], '').replace('gastei', '').replace('reais', '').replace('de', '').trim();
+            if (!title) title = "Gasto Diversoso";
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+
+            let type = "personal";
+            const lower = title.toLowerCase();
+            if (lower.includes('uber') || lower.includes('taxi') || lower.includes('hospedagem') || lower.includes('hotel') || lower.includes('peca') || lower.includes('conserto')) {
+                type = "reimbursable";
+            }
+
+            const trip = trips.find(t => t.id === currentTripId);
+            if (trip) {
+                trip.expenses.push({ title: title, amount: amount, type: type });
+                saveToStorage();
+                openDetail(trip.id);
+                alert(`🎙️ Registrado por voz!\n"${title}" - ${formatMoney(amount)}\n(${type === 'reimbursable' ? 'Reembolsável' : 'Gasto Pessoal'})`);
+            }
+        }
+
+        // Inicializar renderização
+        renderTrips();
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker registrado com sucesso!'))
+                .catch(err => console.log('Erro ao registrar Service Worker:', err));
+        }
+    </script>
+
+</body>
+</html>
