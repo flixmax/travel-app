@@ -264,6 +264,61 @@
         .fab:hover {
             background: #4338ca;
         }
+        .fab.above-nav {
+            bottom: 76px;
+        }
+        .bottom-nav {
+            display: flex;
+            border-top: 1px solid #e5e7eb;
+            background: #ffffff;
+            padding: 6px 8px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .bottom-nav.hidden {
+            display: none;
+        }
+        .nav-tab {
+            flex: 1;
+            border: none;
+            background: none;
+            padding: 8px 6px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .nav-tab.active {
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+        .month-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 6px 10px;
+        }
+        .month-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 2px 10px;
+        }
+        .month-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
 
         .btn-delete {
             background: #fee2e2;
@@ -624,7 +679,71 @@
                 </div>
             </div>
 
-            <button class="fab" onclick="openTripModal()" title="Nova Viagem">+</button>
+            <button class="fab above-nav" onclick="openTripModal()" title="Nova Viagem">+</button>
+        </div>
+
+
+        <!-- TELA 1B: MEU MÊS (GASTOS PESSOAIS + LUCROS PAGOS) -->
+        <div id="screen-month" class="screen">
+            <div class="app-header">
+                <h1>Meu Mês 📊</h1>
+                <div class="month-bar">
+                    <button type="button" class="month-btn" onclick="changeMonth(-1)">‹</button>
+                    <span id="month-label" class="month-label">Novembro / 2026</span>
+                    <button type="button" class="month-btn" onclick="changeMonth(1)">›</button>
+                </div>
+                <div class="summary-card">
+                    <p>Saldo Livre do Mês (Lucros Pagos − Gastos Pessoais)</p>
+                    <h2 id="month-net">R$ 0,00</h2>
+                </div>
+            </div>
+
+            <div class="app-content">
+                <!-- Resumo do Mês -->
+                <div class="card-section">
+                    <h3>Resumo do Mês</h3>
+                    <div class="expense-item">
+                        <span>Lucros Líquidos (Viagens Pagas)</span>
+                        <span id="month-profits" style="font-weight: 700; color: #059669;">+ R$ 0,00</span>
+                    </div>
+                    <div class="expense-item">
+                        <span>Gastos Pessoais (Viagens)</span>
+                        <span id="month-trip-personal" style="font-weight: 600; color: #64748b;">- R$ 0,00</span>
+                    </div>
+                    <div class="expense-item">
+                        <span>Gastos do Dia a Dia</span>
+                        <span id="month-daily-total" style="font-weight: 600; color: #dc2626;">- R$ 0,00</span>
+                    </div>
+                    <div class="expense-item" style="border-top: 1px dashed #e5e7eb; margin-top: 4px; padding-top: 8px; font-weight: 700;">
+                        <span>Total de Gastos Pessoais</span>
+                        <span id="month-total-personal" style="color: #dc2626;">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Gastos do Dia a Dia -->
+                <div class="card-section">
+                    <div class="card-section-header">
+                        <h3>Gastos do Dia a Dia</h3>
+                        <button type="button" class="btn-edit-inline" onclick="openDailyModal()">+ Adicionar</button>
+                    </div>
+                    <div id="daily-expenses-list"></div>
+                    <div class="tap-hint">Toque em um gasto do dia a dia para editar.</div>
+                </div>
+
+                <!-- Gastos Pessoais das Viagens -->
+                <div class="card-section" style="border-color: #cbd5e1; background: #f8fafc;">
+                    <h3 style="color: #64748b;">Gastos Pessoais das Viagens</h3>
+                    <div id="month-trip-expenses-list"></div>
+                </div>
+
+                <!-- Viagens Pagas no Mês -->
+                <div class="card-section">
+                    <h3>Viagens Pagas no Mês</h3>
+                    <div id="month-paid-trips-list"></div>
+                </div>
+            </div>
+
+            <button class="fab above-nav" onclick="openDailyModal()" title="Novo Gasto do Dia a Dia">+</button>
         </div>
 
 
@@ -895,6 +1014,38 @@
             </div>
         </div>
 
+        <!-- MODAL: GASTO DO DIA A DIA -->
+        <div id="dailyModal" class="modal">
+            <div class="modal-card">
+                <h3 id="dailyModalTitle">Novo Gasto do Dia a Dia</h3>
+                <p>Registre um gasto pessoal fora das viagens.</p>
+                <form id="dailyForm" onsubmit="saveDailyExpense(event)">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="dailyTitle" placeholder="Ex: Mercado, Farmácia, Conta de luz" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" step="0.01" min="0.01" id="dailyAmount" placeholder="50.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="text" id="dailyDate" placeholder="Ex: 26/11/2026" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" onclick="closeDailyModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Gasto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- NAVEGAÇÃO INFERIOR -->
+        <div id="bottom-nav" class="bottom-nav">
+            <button type="button" id="nav-trips" class="nav-tab active" onclick="showList()">🚛 Viagens</button>
+            <button type="button" id="nav-month" class="nav-tab" onclick="showMonth()">📊 Meu Mês</button>
+        </div>
+
     </div>
 
     <script>
@@ -928,10 +1079,16 @@
             t.expenses = t.expenses || [];
         });
 
+        let dailyExpenses = JSON.parse(localStorage.getItem('viagens_daily_expenses')) || [];
+
         let currentTripId = null;
         let editingTripId = null;         // null = nova viagem; id = editando folha existente
         let editingExpenseIndex = null;   // null = novo gasto; número = editando gasto existente
+        let editingDailyId = null;        // null = novo gasto do dia a dia; id = editando
         let expenseTypeTouched = false;   // usuário escolheu o tipo manualmente?
+
+        const nowInit = new Date();
+        let selectedMonth = { month: nowInit.getMonth() + 1, year: nowInit.getFullYear() };
 
         const STATUS_PENDING = "Aguardando Acerto";
         const STATUS_PAID = "Pago";
@@ -1169,7 +1326,9 @@
             }
 
             document.getElementById('screen-list').classList.remove('active');
+            document.getElementById('screen-month').classList.remove('active');
             document.getElementById('screen-detail').classList.add('active');
+            document.getElementById('bottom-nav').classList.add('hidden');
         }
 
         function deleteCurrentTrip() {
@@ -1343,11 +1502,180 @@
             }
         }
 
-        // ---------- Navegação / Nova viagem ----------
+        // ---------- Navegação / Meu Mês / Nova viagem ----------
         function showList() {
             document.getElementById('screen-detail').classList.remove('active');
+            document.getElementById('screen-month').classList.remove('active');
             document.getElementById('screen-list').classList.add('active');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('nav-trips').classList.add('active');
+            document.getElementById('nav-month').classList.remove('active');
             renderTrips();
+        }
+
+        function showMonth() {
+            document.getElementById('screen-detail').classList.remove('active');
+            document.getElementById('screen-list').classList.remove('active');
+            document.getElementById('screen-month').classList.add('active');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('nav-trips').classList.remove('active');
+            document.getElementById('nav-month').classList.add('active');
+            renderMonth();
+        }
+
+        const MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        function parseMonthYear(dateStr) {
+            const m = String(dateStr || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+            if (!m) return null;
+            let year = parseInt(m[3], 10);
+            if (year < 100) year += 2000;
+            return { month: parseInt(m[2], 10), year };
+        }
+
+        function isInSelectedMonth(dateStr) {
+            const parsed = parseMonthYear(dateStr);
+            return parsed && parsed.month === selectedMonth.month && parsed.year === selectedMonth.year;
+        }
+
+        function changeMonth(delta) {
+            let m = selectedMonth.month + delta;
+            let y = selectedMonth.year;
+            if (m < 1) { m = 12; y--; }
+            if (m > 12) { m = 1; y++; }
+            selectedMonth = { month: m, year: y };
+            renderMonth();
+        }
+
+        function saveDailyToStorage() {
+            localStorage.setItem('viagens_daily_expenses', JSON.stringify(dailyExpenses));
+            renderMonth();
+        }
+
+        function renderMonth() {
+            document.getElementById('month-label').innerText = `${MONTH_NAMES[selectedMonth.month - 1]} / ${selectedMonth.year}`;
+
+            const monthTrips = trips.filter(t => isInSelectedMonth(t.date));
+            const paidTrips = monthTrips.filter(t => t.status === STATUS_PAID);
+            const monthDaily = dailyExpenses.filter(d => isInSelectedMonth(d.date));
+
+            let profitsPaid = 0;
+            const paidListEl = document.getElementById('month-paid-trips-list');
+            paidListEl.innerHTML = '';
+            paidTrips.forEach(t => {
+                const c = calcTrip(t);
+                profitsPaid += c.netProfit;
+                const item = document.createElement('div');
+                item.className = 'expense-item clickable';
+                item.onclick = () => openDetail(t.id);
+                item.innerHTML = `<span>${escapeHtml(t.destination)} <small style="color:#6b7280;">(${escapeHtml(t.date)})</small></span><span style="font-weight:600; color:${c.netProfit < 0 ? '#dc2626' : '#059669'};">${formatMoney(c.netProfit)}</span>`;
+                paidListEl.appendChild(item);
+            });
+            if (paidTrips.length === 0) {
+                paidListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhuma viagem marcada como Pago neste mês.</div>';
+            }
+
+            let tripPersonalTotal = 0;
+            const tripExpListEl = document.getElementById('month-trip-expenses-list');
+            tripExpListEl.innerHTML = '';
+            monthTrips.forEach(t => {
+                (t.expenses || []).forEach(exp => {
+                    if (exp.type !== 'reimbursable' && !isToll(exp.title)) {
+                        tripPersonalTotal += exp.amount;
+                        const item = document.createElement('div');
+                        item.className = 'expense-item clickable';
+                        item.onclick = () => openDetail(t.id);
+                        item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))} <small style="color:#6b7280;">· ${escapeHtml(t.destination)}</small></span><span style="color:#64748b;">${formatMoney(exp.amount)}</span>`;
+                        tripExpListEl.appendChild(item);
+                    }
+                });
+            });
+            if (tripExpListEl.children.length === 0) {
+                tripExpListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal nas viagens deste mês.</div>';
+            }
+
+            let dailyTotal = 0;
+            const dailyListEl = document.getElementById('daily-expenses-list');
+            dailyListEl.innerHTML = '';
+            monthDaily.forEach(d => {
+                dailyTotal += d.amount;
+                const item = document.createElement('div');
+                item.className = 'expense-item clickable';
+                item.onclick = () => openDailyModal(d.id);
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(d.title))} <small style="color:#6b7280;">(${escapeHtml(d.date)})</small></span><span class="expense-amount"><span style="color:#dc2626;">- ${formatMoney(d.amount)}</span><button class="expense-del" title="Excluir gasto" onclick="event.stopPropagation(); deleteDailyExpense(${d.id})">×</button></span>`;
+                dailyListEl.appendChild(item);
+            });
+            if (monthDaily.length === 0) {
+                dailyListEl.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto do dia a dia neste mês.</div>';
+            }
+
+            const totalPersonal = tripPersonalTotal + dailyTotal;
+            const netMonth = profitsPaid - totalPersonal;
+
+            document.getElementById('month-profits').innerText = '+ ' + formatMoney(profitsPaid);
+            document.getElementById('month-trip-personal').innerText = '- ' + formatMoney(tripPersonalTotal);
+            document.getElementById('month-daily-total').innerText = '- ' + formatMoney(dailyTotal);
+            document.getElementById('month-total-personal').innerText = formatMoney(totalPersonal);
+            const netEl = document.getElementById('month-net');
+            netEl.innerText = formatMoney(netMonth);
+            netEl.style.color = netMonth < 0 ? '#fecaca' : '#ffffff';
+        }
+
+        function openDailyModal(id = null) {
+            const form = document.getElementById('dailyForm');
+            form.reset();
+            editingDailyId = null;
+
+            const existing = id !== null ? dailyExpenses.find(d => d.id === id) : null;
+            if (existing) {
+                editingDailyId = existing.id;
+                document.getElementById('dailyModalTitle').innerText = 'Editar Gasto do Dia a Dia';
+                document.getElementById('dailyTitle').value = existing.title;
+                document.getElementById('dailyAmount').value = existing.amount;
+                document.getElementById('dailyDate').value = existing.date;
+            } else {
+                document.getElementById('dailyModalTitle').innerText = 'Novo Gasto do Dia a Dia';
+                const now = new Date();
+                document.getElementById('dailyDate').value = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            }
+            document.getElementById('dailyModal').classList.add('active');
+            document.getElementById('dailyTitle').focus();
+        }
+
+        function closeDailyModal() {
+            document.getElementById('dailyModal').classList.remove('active');
+            document.getElementById('dailyForm').reset();
+            editingDailyId = null;
+        }
+
+        function saveDailyExpense(e) {
+            e.preventDefault();
+            const title = tidyTitle(document.getElementById('dailyTitle').value.trim());
+            const amount = parseFloat(document.getElementById('dailyAmount').value);
+            const date = document.getElementById('dailyDate').value.trim();
+            if (!title || !(amount > 0) || !date) return;
+
+            if (editingDailyId !== null) {
+                const item = dailyExpenses.find(d => d.id === editingDailyId);
+                if (item) {
+                    item.title = title;
+                    item.amount = amount;
+                    item.date = date;
+                }
+            } else {
+                dailyExpenses.push({ id: Date.now(), title, amount, date });
+            }
+            saveDailyToStorage();
+            closeDailyModal();
+        }
+
+        function deleteDailyExpense(id) {
+            const item = dailyExpenses.find(d => d.id === id);
+            if (!item) return;
+            if (confirm(`Excluir o gasto "${item.title}" (${formatMoney(item.amount)})?`)) {
+                dailyExpenses = dailyExpenses.filter(d => d.id !== id);
+                saveDailyToStorage();
+            }
         }
 
         function openTripModal(tripId = null) {

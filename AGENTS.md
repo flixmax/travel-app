@@ -20,7 +20,7 @@ Todo o texto da interface é em português do Brasil.
 
 ## Dados (cuidado ao mudar)
 
-- Os dados ficam no `localStorage` do aparelho, na chave `viagens_data`. Não há servidor nem sincronização.
+- Os dados ficam no `localStorage` do aparelho, na chave `viagens_data` (e `viagens_daily_expenses` para gastos pessoais do dia a dia fora das viagens). Não há servidor nem sincronização.
 - **O usuário já tem viagens reais salvas no celular.** Não renomeie a chave nem os campos sem
   migrar os dados antigos. Ao criar um campo novo, use um valor padrão para viagens antigas
   (veja o `trips.forEach(...)` logo depois do carregamento).
