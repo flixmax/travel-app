@@ -41,7 +41,8 @@
         .screen {
             display: none;
             flex-direction: column;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
         }
         .screen.active {
@@ -265,7 +266,10 @@
             background: #4338ca;
         }
         .fab.above-nav {
-            bottom: 76px;
+            bottom: 68px;
+            width: 50px;
+            height: 50px;
+            font-size: 22px;
         }
         .bottom-nav {
             display: flex;
@@ -693,7 +697,7 @@
                     <button type="button" class="month-btn" onclick="changeMonth(1)">›</button>
                 </div>
                 <div class="summary-card">
-                    <p>Saldo Livre do Mês (Lucros Pagos − Gastos Pessoais)</p>
+                    <p>Saldo Livre do Mês (Lucros Pagos − Gastos do Dia a Dia)</p>
                     <h2 id="month-net">R$ 0,00</h2>
                 </div>
             </div>
@@ -742,8 +746,6 @@
                     <div id="month-paid-trips-list"></div>
                 </div>
             </div>
-
-            <button class="fab above-nav" onclick="openDailyModal()" title="Novo Gasto do Dia a Dia">+</button>
         </div>
 
 
@@ -1610,7 +1612,7 @@
             }
 
             const totalPersonal = tripPersonalTotal + dailyTotal;
-            const netMonth = profitsPaid - totalPersonal;
+            const netMonth = profitsPaid - dailyTotal;
 
             document.getElementById('month-profits').innerText = '+ ' + formatMoney(profitsPaid);
             document.getElementById('month-trip-personal').innerText = '- ' + formatMoney(tripPersonalTotal);
