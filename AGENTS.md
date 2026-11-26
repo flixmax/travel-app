@@ -8,8 +8,8 @@ Todo o texto da interface é em português do Brasil.
 - `index.html`: o app inteiro (HTML + CSS + JS puro, sem framework nem build).
 - `sw.js`: service worker (busca na rede primeiro; se a rede falhar ou demorar mais de 3 s, usa o cache).
 - `manifest.json`, `icon-192.png`, `icon-512.png`: instalação como app no celular.
-- `icon.svg`: fonte do ícone (estrada com a faixa amarela central das rodovias brasileiras e a moeda
-  R$ nascendo no horizonte, nas cores do app). Os PNGs são gerados a partir dele em 1024px e reduzidos.
+- `icon.svg`: fonte do ícone (frente de uma cabine de caminhão premium, genérica e sem marca: luzes âmbar
+  no teto, grade cromada, faróis de LED, sobre grafite). Os PNGs são renderizados a partir dele em cada tamanho.
   A arte vai até as bordas e o conteúdo importante fica no círculo central de 80% (zona segura), por isso
   os mesmos PNGs servem como `any` e `maskable` no manifest.
 - `travel_app_prototype.html`: protótipo antigo com dados simulados. **Não é usado pelo app.**
@@ -83,14 +83,26 @@ Todas estão na função `calcTrip()`.
 
 ## Visual
 
-- Tema escuro. **Todas as cores estão nas variáveis do `:root`** no começo do `<style>`. Não escreva
-  cor solta no HTML nem no JS: use as classes `.amount.pos / .neg / .muted / .accent`, `.empty-line` etc.
+- Tema **"Cabine"** (desde a v46): o app como o painel de instrumentos de um caminhão topo de linha.
+  Grafite `#141518`, painéis `#1C1E22`, âmbar de instrumento `#FFB547`, verde `#4CD38A`, alerta `#FF6B5E`.
+  Fontes Barlow (texto) e Barlow Condensed (números e títulos). Metal escovado nos cabeçalhos, friso
+  cromado no topo dos painéis, visores digitais rebaixados (`.placar-box`, `.summary-card`) e o "+" e o
+  microfone como "botão de partida" com anel âmbar.
+- **As cores ficam em variáveis `:root`.** O bloco `TEMA "CABINE"` no fim do `<style>` tem o `:root` que
+  vale (ele sobrepõe o do começo) e todas as regras do tema. Não escreva cor solta no HTML nem no JS: use as
+  classes `.amount.pos / .neg / .muted / .accent`, `.empty-line` etc.
+- Tela inicial: quadro de instrumentos com velocímetro (`.cluster`). O arco mostra a % do acerto das viagens
+  **do mês atual** já recebida; no centro fica o Total Pendente (todas as viagens). Tudo isso vem de
+  `updateCluster()`, chamada no fim de `renderTrips()`, e serve só para exibir (não muda nenhum cálculo).
+- Cartões de viagem ("ordem de viagem"): bloco de data, luz de status (`.lamp`, âmbar pendente / verde pago),
+  grade 2×2 de valores (`.tc-gauges`) e o acerto no rodapé (`.tc-settle`). O HTML sai de `renderTrips()`.
+- Ícones são SVG em linha (`.ico`), não emoji. Revisado em 320, 360 e 390px de largura.
 - No celular (até 480px ou instalado) o app ocupa a tela inteira, sem a moldura de "celular" que
   aparece no computador. Respeita as áreas seguras (`env(safe-area-inset-*)`).
 - No celular, `html` e `body` ficam travados (`overflow: hidden; overscroll-behavior: none`) e só as
   `.screen` rolam. Não tire isso: sem a trava, o "elástico" do Android arrasta o app inteiro.
 - Campos com 16px (abaixo disso o iPhone dá zoom) e alvos de toque com pelo menos 40–44px (`--tap`).
-- A cor da barra de navegação do Android vem do `theme_color` do `manifest.json` (`#0F172A`), que é
+- A cor da barra de navegação do Android vem do `theme_color` do `manifest.json` (`#141518`), que é
   a mesma do fim do degradê da barra do app (`navGrad`). Mudou uma, mude a outra. O Android grava essa
   cor quando o app é instalado: troca no manifest só aparece quando o Chrome atualiza o app instalado
   (pode levar até 1 dia) ou quando o app é reinstalado.

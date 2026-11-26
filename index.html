@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Controle de Viagens e Reembolsos</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0F172A">
+    <meta name="theme-color" content="#141518">
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Painel escuro de uso no celular, uma coluna, números alinhados à direita.
            Todas as cores vêm daqui: não escreva cor solta no HTML ou no JS, use as classes .amount.* */
@@ -944,6 +944,245 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation: none !important; transition: none !important; }
         }
+
+        /* ======================= TEMA "CABINE" =======================
+           O app como o painel de instrumentos de uma cabine premium: grafite, metal escovado,
+           frisos cromados, luz âmbar de instrumento e visores digitais rebaixados.
+           Fontes: Barlow Condensed (números e títulos) + Barlow (texto). Este :root sobrepõe o do começo do <style>. */
+        :root {
+            --bg: #08090A;
+            --surface-0: #141518;      /* cabine: fundo das telas (= theme_color) */
+            --surface-1: #1C1E22;      /* painéis */
+            --surface-2: #17191C;
+            --border: #2C2F35;
+            --border-soft: rgba(255, 255, 255, 0.06);
+            --text: #EDEEF0;
+            --text-2: #C5C8CD;
+            --muted: #969BA3;
+            --faint: #5D626A;
+            --positive: #4CD38A;
+            --negative: #FF6B5E;
+            --warning: #FFB547;
+            --accent: #FFB547;         /* luz âmbar do painel */
+            --accent-soft: #FFCB7A;
+            --accent-fill: #FFB547;
+            --accent-deep: #E8891C;
+            --on-accent: #1A1206;
+            --focus: #FFB547;
+            --display: #08090A;        /* visor rebaixado */
+            --chrome-hi: rgba(255, 255, 255, 0.10);
+            --amber-glow: rgba(255, 181, 71, 0.35);
+            --amber-tint: rgba(255, 181, 71, 0.10);
+            --amber-line: rgba(255, 181, 71, 0.38);
+            --pos-tint: rgba(76, 211, 138, 0.10);
+            --pos-line: rgba(76, 211, 138, 0.32);
+            --neg-tint: rgba(255, 107, 94, 0.09);
+            --neg-line: rgba(255, 107, 94, 0.30);
+            --brushed: repeating-linear-gradient(90deg, rgba(255,255,255,0.014) 0 1px, transparent 1px 3px);
+            --cond: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+        }
+        * { font-family: 'Barlow', -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { line-height: 1.35; background: radial-gradient(120% 80% at 50% 0%, #17191D 0%, var(--bg) 60%); }
+        .phone-container { border-color: #222429; background: var(--surface-0); }
+        .ico { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+        /* ---------- Painéis: grafite com friso cromado no topo ---------- */
+        .card-section, .trip-card {
+            background: linear-gradient(180deg, #1F2125 0%, #1A1C1F 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: inset 0 1px 0 var(--chrome-hi), 0 10px 24px rgba(0, 0, 0, 0.35);
+        }
+        .card-section.card-muted { background: linear-gradient(180deg, #1A1C1F, #17191C); }
+        .card-section h3, .card-section.card-muted h3, .section-title {
+            font-family: var(--cond); text-transform: none; letter-spacing: 0.01em;
+            font-size: 1.2rem; font-weight: 600; color: var(--text);
+        }
+        .card-section.card-muted h3 { color: var(--text-2); }
+        .section-title { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 2px 12px; font-size: 1.35rem; }
+        .expense-item { border-bottom-color: var(--border-soft); font-size: 0.92rem; }
+        #extra-incomes-list .expense-item:last-child { border-bottom: 1px solid var(--border-soft); }
+        .expense-item:has(+ .row-divided) { border-bottom: none; }
+        .expense-item.row-divided { margin-top: 6px; border-top: 1px solid var(--border); }
+        .amount { font-family: var(--cond); font-size: 1.08rem; font-weight: 500; letter-spacing: 0.01em; }
+        .amount.strong, .detail-row .amount.strong { font-weight: 600; }
+        .tap-hint, .backup-hint { color: var(--muted); }
+
+        /* ---------- Cabeçalhos: metal escovado ---------- */
+        .app-header {
+            background: var(--brushed), linear-gradient(180deg, #1B1D21 0%, var(--surface-0) 100%);
+            border-bottom: 1px solid #000;
+            box-shadow: 0 1px 0 var(--border-soft);
+        }
+        .app-header h1 { font-family: var(--cond); font-size: 2rem; font-weight: 700; line-height: 1.05; letter-spacing: 0; }
+        .detail-subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 6px; }
+        .back-btn { color: var(--accent); font-weight: 600; }
+
+        /* ---------- Quadro de instrumentos (tela inicial) ---------- */
+        .cluster {
+            position: relative;
+            border-radius: 22px;
+            padding: 18px 16px 14px;
+            background:
+                radial-gradient(90% 70% at 50% 95%, rgba(255, 181, 71, 0.10), transparent 70%),
+                linear-gradient(180deg, #0F1012, #08090A);
+            border: 1px solid #000;
+            box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 0 1px #2A2D33, 0 1px 0 2px rgba(255,255,255,0.05);
+        }
+        .gauge-wrap { position: relative; width: 100%; max-width: 300px; margin: 0 auto; }
+        .gauge { display: block; width: 100%; height: auto; overflow: visible; }
+        .gauge .g-track { stroke: #24272C; }
+        .gauge .g-ticks { stroke: #4A4F57; }
+        .gauge .g-ticks-major { stroke: #8D929A; }
+        .gauge .g-fill { stroke: var(--accent); filter: drop-shadow(0 0 6px var(--amber-glow)); transition: stroke-dasharray 0.9s cubic-bezier(.2,.8,.2,1); }
+        .gauge .g-scale { fill: var(--faint); font-family: var(--cond); font-size: 11px; }
+        .gauge-center { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; }
+        .gauge-label { font-size: 0.82rem; color: var(--muted); }
+        .gauge-value {
+            font-family: var(--cond); font-weight: 600; font-size: 2.9rem; line-height: 1;
+            color: var(--accent); text-shadow: 0 0 18px var(--amber-glow); margin-top: 2px;
+        }
+        .gauge-sub { font-size: 0.8rem; color: var(--text-2); margin-top: 4px; }
+        .cluster-readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+        .readout {
+            background: #111215; border: 1px solid #23262B; border-radius: 12px; padding: 9px 12px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7);
+        }
+        .readout small { display: block; font-size: 0.74rem; color: var(--muted); }
+        .readout b { font-family: var(--cond); font-weight: 600; font-size: 1.25rem; color: var(--text); }
+        .app-header.compact { background: var(--surface-0); box-shadow: none; border-bottom: 0; padding: 16px 16px 4px; }
+        .app-content { padding: 16px; padding-bottom: 96px; }
+
+        /* ---------- Ordem de viagem ---------- */
+        .trip-card { padding: 0; overflow: hidden; margin-bottom: 14px; position: relative; }
+        .trip-card::before {
+            content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 0 3px 3px 0;
+            background: var(--positive);
+        }
+        .trip-card.is-pending::before { background: var(--accent); box-shadow: 0 0 10px var(--amber-glow); }
+        .tc-head { display: flex; align-items: center; gap: 12px; padding: 14px 14px 10px 16px; }
+        .tc-date {
+            width: 50px; flex-shrink: 0; text-align: center; border-radius: 10px; padding: 5px 0 4px;
+            background: #111215; border: 1px solid #262930; box-shadow: inset 0 1px 2px rgba(0,0,0,.6);
+        }
+        .tc-date b { display: block; font-family: var(--cond); font-size: 1.45rem; font-weight: 700; line-height: 1; color: var(--text); }
+        .tc-date span { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+        .tc-title { flex: 1; min-width: 0; }
+        .tc-dest { font-family: var(--cond); font-size: 1.32rem; font-weight: 600; line-height: 1.1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lamp { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600; margin-top: 3px; color: var(--positive); }
+        .lamp::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+        .lamp.pending { color: var(--accent); }
+        .tc-gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-soft); border-top: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); }
+        .tc-gauges > div { background: #1B1D20; padding: 8px 14px 8px 16px; }
+        .tc-gauges small { display: block; font-size: 0.74rem; color: var(--muted); }
+        .tc-gauges .amount { font-size: 1.12rem; }
+        .tc-settle { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px 12px 16px; background: linear-gradient(180deg, #16181B, #131417); }
+        .tc-settle span { font-size: 0.88rem; color: var(--text-2); font-weight: 500; }
+        .tc-settle strong { font-family: var(--cond); font-size: 1.55rem; font-weight: 600; color: var(--text); letter-spacing: 0.01em; }
+        .trip-card.is-pending .tc-settle strong { color: var(--accent); text-shadow: 0 0 14px var(--amber-glow); }
+        .trip-card:active { transform: scale(0.985); }
+
+        /* ---------- Visores digitais (placar e saldo do mês) ---------- */
+        .placar-box, .summary-card {
+            background: linear-gradient(180deg, #0D0E10, var(--display));
+            border: 1px solid #000;
+            border-radius: 18px;
+            box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.9), 0 0 0 1px #2A2D33, 0 1px 0 2px rgba(255,255,255,0.05);
+        }
+        .summary-card { text-align: left; padding: 16px 18px; margin-top: 14px; }
+        .summary-card p { color: var(--muted); font-size: 0.85rem; }
+        .summary-card h2 { font-family: var(--cond); font-weight: 600; font-size: 2.7rem; color: var(--accent); text-shadow: 0 0 18px var(--amber-glow); letter-spacing: 0; margin-top: 2px; line-height: 1.05; }
+        .summary-card h2.is-negative { color: var(--negative); text-shadow: 0 0 16px rgba(255, 107, 94, 0.35); }
+        .placar-box { padding: 16px; margin-top: 4px; }
+        .placar-eyebrow { text-transform: none; letter-spacing: 0; color: var(--muted); font-size: 0.82rem; font-weight: 500; }
+        .placar-row { font-weight: 500; color: var(--text-2); font-size: 0.95rem; }
+        .placar-main { font-size: 2rem !important; font-weight: 600; line-height: 1; text-shadow: 0 0 16px currentColor; }
+        .placar-main.pos { color: var(--positive); text-shadow: 0 0 14px rgba(76, 211, 138, 0.35); }
+        .placar-formula { color: var(--faint); font-size: 0.78rem; }
+        .placar-block { border-top: 1px solid #1E2024; }
+        #det-balance.placar-main { color: var(--accent); text-shadow: 0 0 18px var(--amber-glow); }
+        .nowrap { white-space: nowrap; }
+
+        /* ---------- Faixas de resumo ---------- */
+        .deposit-summary { background: var(--pos-tint); border: 1px solid var(--pos-line); border-radius: 14px; }
+        .deposit-summary.negative { background: var(--neg-tint); border-color: var(--neg-line); }
+        .deposit-summary span:last-child { font-family: var(--cond); font-size: 1.4rem !important; font-weight: 600; }
+        .expenses-summary { background: var(--neg-tint); border: 1px solid var(--neg-line); border-radius: 14px; color: var(--negative); }
+        .expenses-summary .sub-line { color: var(--text-2); opacity: 1; font-size: 0.82rem; }
+        .expenses-summary .total-line span:last-child { font-family: var(--cond); font-size: 1.3rem !important; }
+
+        /* ---------- Comandos ---------- */
+        .btn-primary { background: linear-gradient(180deg, #FFC56A, var(--accent-deep)); color: var(--on-accent); font-weight: 700; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-2); }
+        .btn-edit-inline {
+            background: linear-gradient(180deg, #25282D, #1D1F23); color: var(--text); border: 1px solid #33363C;
+            box-shadow: inset 0 1px 0 var(--chrome-hi); display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-action, .btn-delete { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; font-weight: 600; }
+        .btn-add-expense { background: linear-gradient(180deg, #25282D, #1D1F23); color: var(--text); border-color: #33363C; box-shadow: inset 0 1px 0 var(--chrome-hi); }
+        .btn-add-income { background: linear-gradient(180deg, #25282D, #1D1F23); color: var(--positive); border-color: #33363C; box-shadow: inset 0 1px 0 var(--chrome-hi); }
+        .btn-paid { background: var(--pos-tint); color: var(--positive); border-color: var(--pos-line); }
+        .btn-paid.undo { background: var(--amber-tint); color: var(--accent); border-color: var(--amber-line); }
+        .btn-delete { background: transparent; color: var(--negative); border: 1px solid var(--neg-line); }
+        .btn-scan-sheet { border: 1px dashed var(--amber-line); background: var(--amber-tint); color: var(--accent); gap: 8px; }
+
+        /* Botão de partida: o "+" central e o microfone */
+        .nav-fab-center, .fab {
+            background: radial-gradient(circle at 50% 30%, #2E3137 0%, #151619 70%);
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 0 4px #0C0D0F, 0 0 0 5px rgba(255,255,255,0.12), 0 0 22px var(--amber-glow), inset 0 0 12px rgba(255,181,71,0.18);
+            text-shadow: 0 0 10px var(--amber-glow);
+        }
+        .nav-fab-center { width: 58px; height: 58px; font-size: 30px; font-weight: 300; margin-bottom: 24px; }
+        .fab .ico { width: 24px; height: 24px; filter: drop-shadow(0 0 6px var(--amber-glow)); }
+        .nav-fab-center:active, .fab:active { transform: scale(0.94); box-shadow: 0 0 0 4px #0C0D0F, 0 0 0 5px rgba(255,255,255,0.12), 0 0 30px rgba(255,181,71,0.6); }
+
+        .nav-tab { color: var(--faint); font-weight: 600; }
+        .nav-tab.active { color: var(--accent); filter: drop-shadow(0 0 8px var(--amber-glow)); }
+        .month-bar { background: #101114; border: 1px solid #000; box-shadow: inset 0 1px 4px rgba(0,0,0,.7), 0 1px 0 var(--border-soft); border-radius: 12px; }
+        .month-label { font-family: var(--cond); font-size: 1.2rem; font-weight: 600; }
+        .month-btn { color: var(--accent); }
+
+        /* Selos (usados fora da lista) */
+        .badge { border-radius: 999px; }
+        .badge.pending { background: var(--amber-tint); color: var(--accent); border: 1px solid var(--amber-line); }
+        .badge.paid { background: var(--pos-tint); color: var(--positive); border: 1px solid var(--pos-line); }
+
+        /* ---------- Modais ---------- */
+        .modal { background: rgba(5, 6, 7, 0.8); }
+        .modal-card { background: linear-gradient(180deg, #1F2125, #1A1C1F); border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--chrome-hi), 0 30px 60px rgba(0,0,0,.6); border-radius: 22px; }
+        .modal-card h3 { font-family: var(--cond); font-size: 1.6rem; font-weight: 600; }
+        .form-group input, .form-group select { background: #101114; border-color: #2A2D33; box-shadow: inset 0 1px 3px rgba(0,0,0,.6); border-radius: 12px; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+        .form-group input:focus-visible, .form-group select:focus-visible { box-shadow: 0 0 0 3px var(--amber-tint); }
+        .type-option { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #101114; border-color: #2A2D33; border-radius: 12px; }
+        .type-option span { display: inline-flex; align-items: center; gap: 6px; }
+        .type-option.selected[data-type="reimbursable"] { border-color: var(--accent); background: var(--amber-tint); color: var(--accent); }
+        .type-option.selected[data-type="personal"] { border-color: var(--muted); background: rgba(255,255,255,.05); color: var(--text); }
+        .mic-icon { background: var(--amber-tint); color: var(--accent); }
+        .mic-icon .ico { width: 32px; height: 32px; }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 181, 71, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 181, 71, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 181, 71, 0); }
+        }
+
+        /* ---------- Revisão de espaçamento (360px e 320px) ---------- */
+        .gauge-center { bottom: 2px; padding: 0 17%; }
+        .gauge-value { font-size: clamp(1.9rem, 10vw, 2.9rem); white-space: nowrap; }
+        .gauge-label { font-size: clamp(0.72rem, 3.4vw, 0.82rem); }
+        .gauge-sub { text-align: center; margin-top: 8px; font-size: 0.8rem; color: var(--text-2); }
+        .card-section-header h3 { flex: 1; min-width: 0; font-size: 1.12rem; }
+        .card-section-header .btn-edit-inline { padding: 8px 11px; }
+        .btn-action { padding: 12px 8px; white-space: nowrap; font-size: 0.9rem; }
+        @media (max-width: 340px) {
+            .btn-action { white-space: normal; font-size: 0.85rem; }
+            .cluster { padding: 14px 12px 12px; }
+            .cluster-readouts { gap: 8px; }
+            .readout { padding: 8px 10px; }
+            .tc-gauges small { font-size: 0.7rem; }
+        }
     </style>
 </head>
 <body>
@@ -953,14 +1192,28 @@
         <!-- TELA 1: LISTA DE VIAGENS -->
         <div id="screen-list" class="screen active">
             <div class="app-header compact">
-                <div class="summary-card">
-                    <p>Total Pendente de Receber</p>
-                    <h2 id="total-pending">R$ 0,00</h2>
+                <div class="cluster">
+                    <div class="gauge-wrap">
+                        <svg class="gauge" viewBox="0 0 240 140" aria-hidden="true">
+                            <g id="gauge-ticks"></g>
+                            <path class="g-track" d="M20 130 A100 100 0 0 1 220 130" fill="none" stroke-width="12" stroke-linecap="round"/>
+                            <path id="gauge-fill" class="g-fill" d="M20 130 A100 100 0 0 1 220 130" fill="none" stroke-width="12" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+                        </svg>
+                        <div class="gauge-center">
+                            <div class="gauge-label">Pendente de receber</div>
+                            <div id="total-pending" class="gauge-value">R$ 0,00</div>
+                        </div>
+                    </div>
+                    <div id="gauge-sub" class="gauge-sub"></div>
+                    <div class="cluster-readouts">
+                        <div class="readout"><small>Em aberto</small><b id="ro-open">0 viagens</b></div>
+                        <div class="readout"><small id="ro-month-label">Recebido no mês</small><b id="ro-received">R$ 0,00</b></div>
+                    </div>
                 </div>
             </div>
 
             <div class="app-content">
-                <div class="section-title">Suas Viagens</div>
+                <div class="section-title">Suas viagens</div>
                 <div id="trips-container">
                     <!-- Preenchido via JavaScript -->
                 </div>
@@ -971,14 +1224,14 @@
         <!-- TELA 1B: MEU MÊS (GASTOS PESSOAIS + LUCROS PAGOS) -->
         <div id="screen-month" class="screen">
             <div class="app-header">
-                <h1>Meu Mês 📊</h1>
+                <h1>Meu mês</h1>
                 <div class="month-bar">
                     <button type="button" class="month-btn" onclick="changeMonth(-1)">‹</button>
                     <span id="month-label" class="month-label">Novembro / 2026</span>
                     <button type="button" class="month-btn" onclick="changeMonth(1)">›</button>
                 </div>
                 <div class="summary-card">
-                    <p>Saldo Livre do Mês (Lucros Pagos − Gastos do Dia a Dia)</p>
+                    <p>Saldo livre do mês</p>
                     <h2 id="month-net">R$ 0,00</h2>
                 </div>
             </div>
@@ -986,7 +1239,7 @@
             <div class="app-content">
                 <!-- Resumo do Mês -->
                 <div class="card-section">
-                    <h3>Resumo do Mês</h3>
+                    <h3>Resumo do mês</h3>
                     <div class="expense-item">
                         <span>Lucros Líquidos (Viagens Pagas)</span>
                         <span id="month-profits" class="amount pos strong">+ R$ 0,00</span>
@@ -1014,10 +1267,10 @@
                 <!-- Gastos do Dia a Dia -->
                 <div class="card-section">
                     <div class="card-section-header">
-                        <h3>Gastos do Dia a Dia</h3>
+                        <h3>Gastos do dia a dia</h3>
                         <div style="display: flex; gap: 6px;">
-                            <button type="button" class="btn-edit-inline" onclick="startVoiceRecognition('daily')" title="Adicionar por voz">🎤</button>
-                            <button type="button" class="btn-edit-inline" onclick="openDailyModal()">+ Adicionar</button>
+                            <button type="button" class="btn-edit-inline" onclick="startVoiceRecognition('daily')" title="Adicionar por voz" aria-label="Adicionar por voz"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+                            <button type="button" class="btn-edit-inline" onclick="openDailyModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Adicionar</button>
                         </div>
                     </div>
                     <div id="daily-expenses-list"></div>
@@ -1026,13 +1279,13 @@
 
                 <!-- Gastos Pessoais das Viagens -->
                 <div class="card-section card-muted">
-                    <h3>Gastos Pessoais das Viagens</h3>
+                    <h3>Gastos pessoais das viagens</h3>
                     <div id="month-trip-expenses-list"></div>
                 </div>
 
                 <!-- Viagens Pagas no Mês -->
                 <div class="card-section">
-                    <h3>Viagens Pagas no Mês</h3>
+                    <h3>Viagens pagas no mês</h3>
                     <div id="month-paid-trips-list"></div>
                 </div>
 
@@ -1061,15 +1314,15 @@
             <div class="app-content">
                 <!-- Restante do Depositado no Topo da Tela -->
                 <div id="deposit-summary-box" class="deposit-summary">
-                    <span>Restante do Depositado:</span>
+                    <span>Restante do depositado</span>
                     <span id="det-remaining-deposited" style="font-size: 1rem;">R$ 0,00</span>
                 </div>
 
                 <!-- Bloco 1: Entradas / Folha -->
                 <div class="card-section">
                     <div class="card-section-header">
-                        <h3>1. Folha da Viagem (Entradas)</h3>
-                        <button type="button" class="btn-edit-inline" onclick="openTripModal(currentTripId)">✏️ Editar</button>
+                        <h3>1. Folha da viagem</h3>
+                        <button type="button" class="btn-edit-inline" onclick="openTripModal(currentTripId)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg> Editar</button>
                     </div>
                     <div class="expense-item row-total">
                         <span>Total Já Depositado</span>
@@ -1103,7 +1356,7 @@
 
                 <!-- Bloco 2: Gastos Reembolsáveis (pagos pela empresa) -->
                 <div class="card-section">
-                    <h3>2. Gastos Reembolsáveis</h3>
+                    <h3>2. Gastos reembolsáveis</h3>
                     <div id="reimbursable-list">
                         <!-- Itens dinâmicos -->
                     </div>
@@ -1111,7 +1364,7 @@
 
                 <!-- Bloco 3: Gastos Pessoais -->
                 <div class="card-section card-muted">
-                    <h3>3. Meus Gastos</h3>
+                    <h3>3. Meus gastos</h3>
                     <div id="personal-list">
                         <!-- Itens dinâmicos -->
                     </div>
@@ -1121,7 +1374,7 @@
                 <!-- Total de Gastos -->
                 <div class="expenses-summary">
                     <div class="total-line">
-                        <span>Total de Gastos:</span>
+                        <span>Total de gastos</span>
                         <span id="det-total-expenses" style="font-size: 1rem;">R$ 0,00</span>
                     </div>
                     <div class="sub-line">
@@ -1142,20 +1395,20 @@
                 <div class="placar-box">
                     <div class="placar-eyebrow">Resultado do acerto com a empresa</div>
                     <div class="placar-row">
-                        <span>Acerto a Receber:</span>
+                        <span>Acerto a receber</span>
                         <span id="det-balance" class="amount pos placar-main">R$ 0,00</span>
                     </div>
                     <div id="det-balance-formula" class="placar-formula">Saldo + Bônus sem ocorrência</div>
                     <div class="placar-block">
                         <div class="placar-row">
-                            <span>Lucro Líquido da Viagem:</span>
+                            <span>Lucro líquido da viagem</span>
                             <span id="det-net-profit" class="amount pos placar-main">R$ 0,00</span>
                         </div>
                         <div class="placar-formula">Acerto a Receber + Restante do Depositado</div>
                     </div>
                     <div class="placar-block clickable" onclick="openTripModal(currentTripId)" title="Toque para editar">
                         <div class="placar-row">
-                            <span>Frete Contratado Líquido (NFS-e):</span>
+                            <span>Frete contratado líquido <span class="nowrap">(NFS-e)</span></span>
                             <span id="det-freight-net" class="amount accent">R$ 0,00</span>
                         </div>
                     </div>
@@ -1163,19 +1416,19 @@
 
                 <!-- Ações da viagem -->
                 <div class="action-row">
-                    <button class="btn-action btn-add-expense" onclick="openExpenseModal()">➖ Adicionar Gasto</button>
-                    <button class="btn-action btn-add-income" onclick="openIncomeModal()">➕ Adicionar Entrada</button>
+                    <button class="btn-action btn-add-expense" onclick="openExpenseModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg> Adicionar gasto</button>
+                    <button class="btn-action btn-add-income" onclick="openIncomeModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Adicionar entrada</button>
                 </div>
                 <div class="action-row">
-                    <button id="btn-toggle-paid" class="btn-action btn-paid" onclick="toggleTripPaid()">✅ Marcar como Pago</button>
+                    <button id="btn-toggle-paid" class="btn-action btn-paid" onclick="toggleTripPaid()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> Marcar como pago</button>
                 </div>
 
                 <!-- Botão de Excluir Viagem -->
-                <button class="btn-delete" onclick="deleteCurrentTrip()">🗑️ Excluir Viagem</button>
+                <button class="btn-delete" onclick="deleteCurrentTrip()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg> Excluir viagem</button>
             </div>
 
             <!-- Botão do Microfone para Voz -->
-            <button class="fab" onclick="startVoiceRecognition()" title="Adicionar por Voz">🎤</button>
+            <button class="fab" onclick="startVoiceRecognition()" title="Adicionar por voz" aria-label="Adicionar por voz"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
         </div>
 
 
@@ -1186,7 +1439,7 @@
                 <p id="tripModalSub">Preencha os dados da folha da viagem.</p>
                 <div id="scanSheetBox">
                     <input type="file" id="sheetPhotoInput" accept="image/*" capture="environment" style="display: none;" onchange="handleSheetPhoto(event)">
-                    <button type="button" id="btnScanSheet" class="btn-scan-sheet" onclick="openScannerModal()">📄 Digitalizar Folha (Câmera)</button>
+                    <button type="button" id="btnScanSheet" class="btn-scan-sheet" onclick="openScannerModal()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 17h6"/></svg> Digitalizar folha (câmera)</button>
                     <div id="ocrStatus" class="ocr-status"></div>
                     <details id="ocrDebugBox" class="ocr-debug" hidden>
                         <summary>Ver texto lido da foto</summary>
@@ -1252,8 +1505,8 @@
                     <div class="form-group">
                         <label>Quem pagou?</label>
                         <div class="type-toggle">
-                            <button type="button" class="type-option" data-type="reimbursable" onclick="selectExpenseType('reimbursable', true)">🏢 Empresa<br><small>Reembolsável</small></button>
-                            <button type="button" class="type-option" data-type="personal" onclick="selectExpenseType('personal', true)">👤 Por minha conta<br><small>Pessoal</small></button>
+                            <button type="button" class="type-option" data-type="reimbursable" onclick="selectExpenseType('reimbursable', true)"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21V5l8-2v18"/><path d="M12 9h8v12"/><path d="M8 8v.01M8 12v.01M8 16v.01M16 13v.01M16 17v.01"/></svg> Empresa</span><small>Reembolsável</small></button>
+                            <button type="button" class="type-option" data-type="personal" onclick="selectExpenseType('personal', true)"><span><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> Por minha conta</span><small>Pessoal</small></button>
                         </div>
                         <div id="expTypeHint" class="type-hint"></div>
                         <input type="hidden" id="expType" value="reimbursable">
@@ -1303,16 +1556,16 @@
                 </div>
                 <div class="modal-actions" style="margin-top: 10px;">
                     <button type="button" class="btn btn-cancel" onclick="closeScannerModal()">Cancelar</button>
-                    <button type="button" class="btn btn-primary" onclick="captureScannerFrame()">📸 Digitalizar</button>
+                    <button type="button" class="btn btn-primary" onclick="captureScannerFrame()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg> Digitalizar</button>
                 </div>
-                <button type="button" class="btn btn-cancel" style="width: 100%; margin-top: 8px; font-size: 0.8rem;" onclick="fallbackToPhotoInput()">🖼️ Usar câmera padrão / galeria</button>
+                <button type="button" class="btn btn-cancel" style="width: 100%; margin-top: 8px; font-size: 0.8rem;" onclick="fallbackToPhotoInput()"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg> Usar câmera padrão / galeria</button>
             </div>
         </div>
 
         <!-- MODAL DE GRAVAÇÃO DE VOZ -->
         <div id="voiceModal" class="modal" role="dialog" aria-modal="true">
             <div class="modal-card" style="text-align: center;">
-                <div class="mic-icon">🎤</div>
+                <div class="mic-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></div>
                 <h3>Ouvindo...</h3>
                 <p id="voice-status">Dite o gasto ou a entrada, ex: <br><em>"Gastei 45 de almoço"</em>, <em>"Uber 30"</em> ou <br><em>"Recebi 100 de diária"</em></p>
                 <div class="modal-actions">
@@ -1326,7 +1579,7 @@
             <div class="modal-card">
                 <h3 id="dailyModalTitle">Novo Gasto do Dia a Dia</h3>
                 <p id="dailyModalSub">Registre um gasto pessoal fora das viagens.</p>
-                <button type="button" id="btnDailyVoice" class="btn-scan-sheet" onclick="closeDailyModal(); startVoiceRecognition('daily');">🎤 Falar Gasto por Voz</button>
+                <button type="button" id="btnDailyVoice" class="btn-scan-sheet" onclick="closeDailyModal(); startVoiceRecognition('daily');"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg> Falar gasto por voz</button>
                 <form id="dailyForm" onsubmit="saveDailyExpense(event)">
                     <div class="form-group">
                         <label for="dailyTitle">Descrição</label>
@@ -1353,13 +1606,13 @@
             <svg class="nav-notch-bg" viewBox="0 0 400 76" preserveAspectRatio="none">
                 <defs>
                     <linearGradient id="navGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#162033"/>
+                        <stop offset="0%" stop-color="#1B1D21"/>
                         <!-- Mesma cor do theme_color do manifest: emenda sem diferença com a barra do Android -->
-                        <stop offset="100%" stop-color="#0F172A"/>
+                        <stop offset="100%" stop-color="#141518"/>
                     </linearGradient>
                 </defs>
                 <path d="M 0 8 L 146 8 C 160 8, 162 46, 200 46 C 238 46, 240 8, 254 8 L 400 8 L 400 76 L 0 76 Z" fill="url(#navGrad)"/>
-                <path d="M 0 8 L 146 8 C 160 8, 162 46, 200 46 C 238 46, 240 8, 254 8 L 400 8" fill="none" stroke="#334155" stroke-width="1.2"/>
+                <path d="M 0 8 L 146 8 C 160 8, 162 46, 200 46 C 238 46, 240 8, 254 8 L 400 8" fill="none" stroke="#2C2F35" stroke-width="1.2"/>
             </svg>
             <button type="button" id="nav-trips" class="nav-tab active" onclick="showList()">
                 <svg viewBox="0 0 24 24"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -1580,46 +1833,74 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'trip-card';
+                card.className = 'trip-card' + (trip.status === STATUS_PENDING ? ' is-pending' : '');
                 card.onclick = () => openDetail(trip.id);
+                const dp = String(trip.date || '').split('/');
+                const monthsShort = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+                const dayTxt = dp[0] || '--';
+                const monTxt = (monthsShort[(+dp[1] || 0) - 1] || '') + (dp[2] && +dp[2] !== new Date().getFullYear() ? ' ' + dp[2].slice(2) : '');
                 card.innerHTML = `
-                    <div class="trip-header">
-                        <div class="trip-header-left">
-                            <svg class="trip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                            <div>
-                                <div class="trip-title">${escapeHtml(trip.destination)}</div>
-                                <div class="trip-date">${escapeHtml(trip.date)}</div>
-                            </div>
-                        </div>
-                        <span class="badge ${trip.status === STATUS_PENDING ? 'pending' : 'paid'}">${escapeHtml(trip.status)}</span>
-                    </div>
-                    <div class="trip-details">
-                        <div class="detail-row">
-                            <span>Total Já Depositado</span>
-                            <span class="amount">${formatMoney(c.deposited)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span>Total de Gastos</span>
-                            <span class="amount neg">- ${formatMoney(c.totalExpenses)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span>Restante do Depositado</span>
-                            <span class="amount strong ${c.remainingDeposited < 0 ? 'neg' : 'pos'}">${formatMoney(c.remainingDeposited)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span>Lucro Líquido</span>
-                            <span class="amount strong ${c.netProfit < 0 ? 'neg' : 'pos'}">${formatMoney(c.netProfit)}</span>
-                        </div>
-                        <div class="detail-row highlight">
-                            <span>Acerto a Receber</span>
-                            <span class="amount">${formatMoney(c.settlement)}</span>
+                    <div class="tc-head">
+                        <div class="tc-date"><b>${escapeHtml(dayTxt)}</b><span>${escapeHtml(monTxt)}</span></div>
+                        <div class="tc-title">
+                            <div class="tc-dest">${escapeHtml(trip.destination)}</div>
+                            <div class="lamp ${trip.status === STATUS_PENDING ? 'pending' : ''}">${escapeHtml(trip.status)}</div>
                         </div>
                     </div>
+                    <div class="tc-gauges">
+                        <div><small>Depositado</small><span class="amount">${formatMoney(c.deposited)}</span></div>
+                        <div><small>Gastos</small><span class="amount neg">- ${formatMoney(c.totalExpenses)}</span></div>
+                        <div><small>Restante do depositado</small><span class="amount ${c.remainingDeposited < 0 ? 'neg' : 'pos'}">${formatMoney(c.remainingDeposited)}</span></div>
+                        <div><small>Lucro líquido</small><span class="amount ${c.netProfit < 0 ? 'neg' : 'pos'}">${formatMoney(c.netProfit)}</span></div>
+                    </div>
+                    <div class="tc-settle"><span>Acerto a receber</span><strong>${formatMoney(c.settlement)}</strong></div>
                 `;
                 container.appendChild(card);
             });
 
             document.getElementById('total-pending').innerText = formatMoney(totalPending);
+            updateCluster();
+        }
+
+        // Quadro de instrumentos: quanto do acerto do mês atual já foi recebido (só exibição)
+        function updateCluster() {
+            const now = new Date();
+            const m = now.getMonth() + 1, y = now.getFullYear();
+            let received = 0, pending = 0, open = 0;
+            trips.forEach(t => {
+                const c = calcTrip(t);
+                if (t.status === STATUS_PENDING) open++;
+                const p = String(t.date || '').split('/');
+                if (+p[1] === m && +p[2] === y) {
+                    if (t.status === STATUS_PAID) received += c.settlement; else pending += c.settlement;
+                }
+            });
+            const total = received + pending;
+            const pct = total > 0 ? Math.max(0, Math.min(100, Math.round(received / total * 100))) : 0;
+            const ticks = document.getElementById('gauge-ticks');
+            if (ticks && !ticks.childElementCount) {
+                let s = '';
+                for (let i = 0; i <= 20; i++) {
+                    const a = Math.PI * (1 - i / 20), major = i % 5 === 0;
+                    const r1 = major ? 110 : 112, r2 = 118;
+                    s += `<line class="${major ? 'g-ticks-major' : 'g-ticks'}" stroke-width="${major ? 2 : 1.2}" x1="${120 + r1 * Math.cos(a)}" y1="${130 - r1 * Math.sin(a)}" x2="${120 + r2 * Math.cos(a)}" y2="${130 - r2 * Math.sin(a)}"/>`;
+                }
+                ticks.innerHTML = s;
+            }
+            const fill = document.getElementById('gauge-fill');
+            if (fill) {
+                fill.setAttribute('stroke-dasharray', `${pct} 100`);
+                fill.style.opacity = pct > 0 ? 1 : 0;
+            }
+            const monthName = now.toLocaleDateString('pt-BR', { month: 'long' });
+            const sub = document.getElementById('gauge-sub');
+            if (sub) sub.innerText = total > 0 ? `${pct}% do acerto de ${monthName} já recebido` : `Nenhum acerto em ${monthName} ainda`;
+            const ro = document.getElementById('ro-open');
+            if (ro) ro.innerText = `${open} ${open === 1 ? 'viagem' : 'viagens'}`;
+            const rl = document.getElementById('ro-month-label');
+            if (rl) rl.innerText = `Recebido em ${monthName}`;
+            const rr = document.getElementById('ro-received');
+            if (rr) rr.innerText = formatMoney(received);
         }
 
         // ---------- Tela de detalhes ----------
@@ -1705,10 +1986,10 @@
 
             const paidBtn = document.getElementById('btn-toggle-paid');
             if (trip.status === STATUS_PAID) {
-                paidBtn.innerText = '↩️ Marcar como Pendente';
+                paidBtn.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> Marcar como pendente';
                 paidBtn.classList.add('undo');
             } else {
-                paidBtn.innerText = '✅ Marcar como Pago';
+                paidBtn.innerHTML = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> Marcar como pago';
                 paidBtn.classList.remove('undo');
             }
 
@@ -1805,7 +2086,7 @@
                 document.getElementById('expModalTitle').innerText = 'Editar Gasto';
                 document.getElementById('expModalSub').innerText = 'Altere os dados ou mude quem pagou.';
             } else if (options.fromVoice) {
-                document.getElementById('expModalTitle').innerText = '🎙️ Confirmar Gasto';
+                document.getElementById('expModalTitle').innerText = 'Confirmar gasto';
                 document.getElementById('expModalSub').innerText = `Ouvi: "${options.heard}". Confira e escolha quem pagou.`;
                 type = suggestType(title) || 'personal';
             } else {
@@ -1863,7 +2144,7 @@
                 options = { ...options, title: inc.title, amount: inc.amount };
                 document.getElementById('incModalTitle').innerText = 'Editar Entrada';
             } else {
-                document.getElementById('incModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Entrada' : 'Nova Entrada';
+                document.getElementById('incModalTitle').innerText = options.fromVoice ? 'Confirmar entrada' : 'Nova entrada';
             }
             document.getElementById('incTitle').value = options.title || '';
             document.getElementById('incAmount').value = options.amount || '';
@@ -2059,7 +2340,7 @@
                 setDateInput('dailyDate', existing.date);
             } else {
                 voiceBtn.style.display = 'flex';
-                document.getElementById('dailyModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Gasto' : 'Novo Gasto do Dia a Dia';
+                document.getElementById('dailyModalTitle').innerText = options.fromVoice ? 'Confirmar gasto' : 'Novo gasto do dia a dia';
                 document.getElementById('dailyModalSub').innerText = options.fromVoice
                     ? `Ouvi: "${options.heard}". Confira os dados abaixo.`
                     : 'Registre um gasto pessoal fora das viagens.';
@@ -2618,7 +2899,7 @@
             // Se o usuário não falar nada, o navegador encerra sem resultado: fecha o modal
             recognition.onend = function() {
                 if (!gotResult) {
-                    document.getElementById('voice-status').innerText = 'Não ouvi nada. Toque no 🎤 e tente de novo.';
+                    document.getElementById('voice-status').innerText = 'Não ouvi nada. Toque no microfone e tente de novo.';
                     setTimeout(stopVoiceRecognition, 1500);
                 }
             };
