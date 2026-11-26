@@ -299,11 +299,101 @@
             color: #9ca3af;
             font-size: 1rem;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 0;
+            width: 22px;
+            text-align: center;
             line-height: 1;
+        }
+        /* Espaço do mesmo tamanho do "×" nas linhas fixas, para os valores ficarem alinhados */
+        .del-spacer {
+            display: inline-block;
+            width: 22px;
         }
         .expense-del:hover {
             color: #dc2626;
+        }
+        .expense-item.clickable {
+            cursor: pointer;
+        }
+        .expense-item.clickable:hover {
+            background: #f9fafb;
+        }
+        .tap-hint {
+            font-size: 0.72rem;
+            color: #9ca3af;
+            margin-top: 6px;
+        }
+        .btn-add-income {
+            background: #ecfdf5;
+            color: #047857;
+            border-color: #a7f3d0;
+        }
+        .btn-add-income:hover {
+            background: #d1fae5;
+        }
+        .expenses-summary {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 15px;
+            color: #991b1b;
+        }
+        .expenses-summary .total-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .expenses-summary .sub-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #b91c1c;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+        .type-toggle {
+            display: flex;
+            gap: 8px;
+        }
+        .type-option {
+            flex: 1;
+            padding: 10px 6px;
+            border: 2px solid #e5e7eb;
+            background: #fff;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+            line-height: 1.3;
+        }
+        .type-option small {
+            font-weight: 400;
+            font-size: 0.72rem;
+            color: #6b7280;
+        }
+        .type-option.selected[data-type="reimbursable"] {
+            border-color: #4f46e5;
+            background: #eef2ff;
+            color: #3730a3;
+        }
+        .type-option.selected[data-type="personal"] {
+            border-color: #64748b;
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .type-option:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .type-hint {
+            font-size: 0.75rem;
+            color: #b45309;
+            margin-top: 6px;
+            min-height: 1em;
         }
 
         /* Modais */
@@ -451,38 +541,55 @@
                     <h3>1. Folha da Viagem (Entradas)</h3>
                     <div class="expense-item">
                         <span>Adiantamento</span>
-                        <span id="det-advance" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                        <span class="expense-amount"><span id="det-advance" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item">
                         <span>Pedágio</span>
-                        <span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                        <span class="expense-amount"><span id="det-toll" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
+                    </div>
+                    <div id="extra-incomes-list">
+                        <!-- Entradas extras (diárias, depósitos) -->
                     </div>
                     <div class="expense-item">
                         <span>Bônus sem ocorrência</span>
-                        <span id="det-bonus" style="font-weight: 600; color: #059669;">+ R$ 0,00</span>
+                        <span class="expense-amount"><span id="det-bonus" style="font-weight: 600; color: #059669;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                     <div class="expense-item" style="margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 8px;">
                         <span>Saldo</span>
-                        <span id="det-remainder" style="font-weight: 600; color: #2563eb;">+ R$ 0,00</span>
+                        <span class="expense-amount"><span id="det-remainder" style="font-weight: 600; color: #2563eb;">+ R$ 0,00</span><span class="del-spacer"></span></span>
                     </div>
                 </div>
 
-                <!-- Bloco 2: Gastos Reembolsáveis (Afetam o Acerto) -->
+                <!-- Bloco 2: Gastos Reembolsáveis (pagos pela empresa) -->
                 <div class="card-section">
-                    <h3>2. Gastos Reembolsáveis (Afetam o Acerto)</h3>
+                    <h3>2. Gastos Reembolsáveis</h3>
                     <div id="reimbursable-list">
                         <!-- Itens dinâmicos -->
                     </div>
                 </div>
 
-                <!-- Bloco 3: Gastos Pessoais (NÃO afetam o Acerto) -->
+                <!-- Bloco 3: Gastos Pessoais -->
                 <div class="card-section" style="border-color: #cbd5e1; background: #f8fafc;">
-                    <h3 style="color: #64748b;">3. Meus Gastos Pessoais (Por minha conta)</h3>
+                    <h3 style="color: #64748b;">3. Meus Gastos Pessoais</h3>
                     <div id="personal-list">
                         <!-- Itens dinâmicos -->
                     </div>
-                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 6px; font-style: italic;">
-                        * Almoço, janta e gastos particulares não entram no acerto.
+                    <div class="tap-hint">Toque num gasto para editar ou mudar entre Empresa / Por minha conta.</div>
+                </div>
+
+                <!-- Total de Gastos -->
+                <div class="expenses-summary">
+                    <div class="total-line">
+                        <span>Total de Gastos:</span>
+                        <span id="det-total-expenses" style="font-size: 1rem;">R$ 0,00</span>
+                    </div>
+                    <div class="sub-line">
+                        <span>Reembolsáveis</span>
+                        <span id="det-total-reimb">R$ 0,00</span>
+                    </div>
+                    <div class="sub-line">
+                        <span>Pessoais</span>
+                        <span id="det-total-personal">R$ 0,00</span>
                     </div>
                 </div>
 
@@ -490,14 +597,18 @@
                 <div class="placar-box">
                     <div style="font-size: 0.8rem; color: #4338ca; margin-bottom: 5px;">RESULTADO DO ACERTO COM A EMPRESA</div>
                     <div class="placar-row">
-                        <span>Saldo a Receber:</span>
+                        <span>Acerto a Receber:</span>
                         <span id="det-balance" style="font-size: 1.2rem; color: #047857;">R$ 0,00</span>
                     </div>
+                    <div style="font-size: 0.75rem; color: #4338ca; opacity: 0.8; margin-top: 4px;">Saldo + Bônus sem ocorrência</div>
                 </div>
 
                 <!-- Ações da viagem -->
                 <div class="action-row">
-                    <button class="btn-action btn-add-expense" onclick="openExpenseModal()">➕ Adicionar Gasto</button>
+                    <button class="btn-action btn-add-expense" onclick="openExpenseModal()">➖ Adicionar Gasto</button>
+                    <button class="btn-action btn-add-income" onclick="openIncomeModal()">➕ Adicionar Entrada</button>
+                </div>
+                <div class="action-row">
                     <button id="btn-toggle-paid" class="btn-action btn-paid" onclick="toggleTripPaid()">✅ Marcar como Pago</button>
                 </div>
 
@@ -552,27 +663,52 @@
         <!-- MODAL: NOVO GASTO (MANUAL) -->
         <div id="expenseModal" class="modal">
             <div class="modal-card">
-                <h3>Novo Gasto</h3>
-                <p>Registre um gasto desta viagem.</p>
+                <h3 id="expModalTitle">Novo Gasto</h3>
+                <p id="expModalSub">Registre um gasto desta viagem.</p>
                 <form id="expenseForm" onsubmit="saveExpense(event)">
                     <div class="form-group">
                         <label>Descrição</label>
-                        <input type="text" id="expTitle" placeholder="Ex: Uber, Almoço, Hotel" required>
+                        <input type="text" id="expTitle" placeholder="Ex: Uber, Almoço, Hotel, Pedágio" oninput="onExpenseTitleChange()" required>
                     </div>
                     <div class="form-group">
                         <label>Valor (R$)</label>
                         <input type="number" step="0.01" min="0.01" id="expAmount" placeholder="45.00" required>
                     </div>
                     <div class="form-group">
-                        <label>Tipo</label>
-                        <select id="expType">
-                            <option value="reimbursable">Reembolsável (afeta o acerto)</option>
-                            <option value="personal">Pessoal (por minha conta)</option>
-                        </select>
+                        <label>Quem pagou?</label>
+                        <div class="type-toggle">
+                            <button type="button" class="type-option" data-type="reimbursable" onclick="selectExpenseType('reimbursable', true)">🏢 Empresa<br><small>Reembolsável</small></button>
+                            <button type="button" class="type-option" data-type="personal" onclick="selectExpenseType('personal', true)">👤 Por minha conta<br><small>Pessoal</small></button>
+                        </div>
+                        <div id="expTypeHint" class="type-hint"></div>
+                        <input type="hidden" id="expType" value="reimbursable">
                     </div>
                     <div class="modal-actions">
                         <button type="button" class="btn btn-cancel" onclick="closeExpenseModal()">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Salvar Gasto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <!-- MODAL: NOVA ENTRADA (diária, depósito extra) -->
+        <div id="incomeModal" class="modal">
+            <div class="modal-card">
+                <h3 id="incModalTitle">Nova Entrada</h3>
+                <p>Valor depositado pela empresa (diária, depósito extra...). Entra na folha da viagem e no Total Já Depositado.</p>
+                <form id="incomeForm" onsubmit="saveIncome(event)">
+                    <div class="form-group">
+                        <label>Descrição</label>
+                        <input type="text" id="incTitle" placeholder="Ex: Diária, Depósito extra" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Valor (R$)</label>
+                        <input type="number" step="0.01" min="0.01" id="incAmount" placeholder="100.00" required>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-cancel" onclick="closeIncomeModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Entrada</button>
                     </div>
                 </form>
             </div>
@@ -584,7 +720,7 @@
             <div class="modal-card" style="text-align: center;">
                 <div class="mic-icon">🎤</div>
                 <h3>Ouvindo...</h3>
-                <p id="voice-status">Dite o gasto, ex: <br><em>"Gastei 45 de almoço"</em> ou <br><em>"Uber 30"</em></p>
+                <p id="voice-status">Dite o gasto ou a entrada, ex: <br><em>"Gastei 45 de almoço"</em>, <em>"Uber 30"</em> ou <br><em>"Recebi 100 de diária"</em></p>
                 <div class="modal-actions">
                     <button class="btn btn-cancel" onclick="stopVoiceRecognition()">Cancelar</button>
                 </div>
@@ -604,6 +740,7 @@
                 remainder: 450,
                 toll: 200,
                 bonus: 300,
+                incomes: [],
                 expenses: [
                     { title: "Uber Hotel", amount: 35, type: "reimbursable" },
                     { title: "Hospedagem Extra", amount: 565, type: "reimbursable" },
@@ -613,15 +750,23 @@
             }
         ];
 
+        // Viagens salvas em versões antigas não tinham a lista de entradas extras
+        trips.forEach(t => {
+            t.incomes = t.incomes || [];
+            t.expenses = t.expenses || [];
+        });
+
         let currentTripId = null;
+        let editingExpenseIndex = null;   // null = novo gasto; número = editando gasto existente
+        let expenseTypeTouched = false;   // usuário escolheu o tipo manualmente?
+
+        const STATUS_PENDING = "Aguardando Acerto";
+        const STATUS_PAID = "Pago";
 
         function saveToStorage() {
             localStorage.setItem('viagens_data', JSON.stringify(trips));
             renderTrips();
         }
-
-        const STATUS_PENDING = "Aguardando Acerto";
-        const STATUS_PAID = "Pago";
 
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, c => ({
@@ -633,20 +778,69 @@
             return 'R$ ' + val.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
+        // Remove acentos e deixa minúsculo, para comparar palavras ("Pedágio" -> "pedagio")
+        function normalize(str) {
+            return String(str).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        }
+
+        // Padroniza descrições: corrige acentos comuns e começa com letra maiúscula ("diaria" -> "Diária")
+        const COMMON_WORDS = {
+            diaria: 'diária', diarias: 'diárias', pedagio: 'pedágio', almoco: 'almoço',
+            cafe: 'café', refeicao: 'refeição', taxi: 'táxi', deposito: 'depósito', peca: 'peça'
+        };
+        function tidyTitle(title) {
+            const fixed = String(title).trim().replace(/\s+/g, ' ')
+                .split(' ')
+                .map(w => COMMON_WORDS[w.toLowerCase()] || w)
+                .join(' ');
+            return fixed.charAt(0).toUpperCase() + fixed.slice(1);
+        }
+
+        const sum = (list) => list.reduce((s, item) => s + item.amount, 0);
+
+        // Todos os totais de uma viagem num só lugar
+        function calcTrip(trip) {
+            const extraIncomes = sum(trip.incomes);
+            const reimbursable = sum(trip.expenses.filter(e => e.type === 'reimbursable'));
+            const personal = sum(trip.expenses.filter(e => e.type !== 'reimbursable'));
+            return {
+                extraIncomes,
+                deposited: (trip.advance || 0) + (trip.toll || 0) + extraIncomes,
+                reimbursable,
+                personal,
+                totalExpenses: reimbursable + personal,
+                settlement: (trip.remainder || 0) + (trip.bonus || 0)   // Acerto = Saldo + Bônus
+            };
+        }
+
+        // ---------- Regras de tipo de gasto ----------
+        // Pedágio é SEMPRE reembolsável.
+        function isToll(title) {
+            return /pedagio/.test(normalize(title));
+        }
+        // Gastos que às vezes são da empresa, às vezes por minha conta: o app pergunta.
+        function isAmbiguous(title) {
+            return /(uber|taxi|99|hotel|hospedagem|pousada)/.test(normalize(title));
+        }
+        // Sugestão inicial de tipo pela descrição
+        function suggestType(title) {
+            const t = normalize(title);
+            if (isToll(t)) return 'reimbursable';
+            if (/(almoco|janta|jantar|cafe|lanche|refeicao|marmita|agua|refrigerante|sorvete)/.test(t)) return 'personal';
+            if (/(uber|taxi|99|hotel|hospedagem|pousada|peca|conserto|oficina|borracharia|combustivel|diesel|lavagem|estacionamento)/.test(t)) return 'reimbursable';
+            return null;
+        }
+
+        // ---------- Tela de lista ----------
         function renderTrips() {
             const container = document.getElementById('trips-container');
             container.innerHTML = '';
             let totalPending = 0;
 
             trips.forEach(trip => {
-                let totalIncome = (trip.advance || 0) + (trip.remainder || 0) + (trip.toll || 0) + (trip.bonus || 0);
-                let reimbursableTotal = trip.expenses
-                    .filter(e => e.type === 'reimbursable')
-                    .reduce((sum, e) => sum + e.amount, 0);
-
-                let balance = totalIncome - reimbursableTotal;
-                if (trip.status === "Aguardando Acerto") {
-                    totalPending += balance;
+                const c = calcTrip(trip);
+                if (trip.status === STATUS_PENDING) {
+                    totalPending += c.settlement;
                 }
 
                 const card = document.createElement('div');
@@ -662,16 +856,16 @@
                     </div>
                     <div class="trip-details">
                         <div class="detail-row">
-                            <span>Total Entradas (Folha + Bônus):</span>
-                            <span>${formatMoney(totalIncome)}</span>
+                            <span>Total Já Depositado:</span>
+                            <span>${formatMoney(c.deposited)}</span>
                         </div>
                         <div class="detail-row">
-                            <span>Gastos Reembolsáveis:</span>
-                            <span>- ${formatMoney(reimbursableTotal)}</span>
+                            <span>Total de Gastos:</span>
+                            <span>- ${formatMoney(c.totalExpenses)}</span>
                         </div>
                         <div class="detail-row highlight">
-                            <span>Saldo Final a Receber:</span>
-                            <span style="color: #059669;">${formatMoney(balance)}</span>
+                            <span>Acerto (Saldo + Bônus):</span>
+                            <span style="color: #059669;">${formatMoney(c.settlement)}</span>
                         </div>
                     </div>
                 `;
@@ -681,10 +875,12 @@
             document.getElementById('total-pending').innerText = formatMoney(totalPending);
         }
 
+        // ---------- Tela de detalhes ----------
         function openDetail(id) {
             currentTripId = id;
             const trip = trips.find(t => t.id === id);
             if (!trip) return;
+            const c = calcTrip(trip);
 
             document.getElementById('detail-title').innerText = trip.destination;
             document.getElementById('detail-subtitle').innerText = `${trip.date} - Status: ${trip.status}`;
@@ -694,33 +890,52 @@
             document.getElementById('det-bonus').innerText = '+ ' + formatMoney(trip.bonus || 0);
             document.getElementById('det-remainder').innerText = '+ ' + formatMoney(trip.remainder || 0);
 
-            // Valor depositado inicialmente (Adiantamento + Pedágio) no TOPO
-            let deposited = (trip.advance || 0) + (trip.toll || 0);
-            document.getElementById('det-deposited').innerText = formatMoney(deposited);
+            // Entradas extras (diárias, depósitos) dentro da folha
+            const incomesList = document.getElementById('extra-incomes-list');
+            incomesList.innerHTML = '';
+            trip.incomes.forEach((inc, index) => {
+                const item = document.createElement('div');
+                item.className = 'expense-item';
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(inc.title))}</span><span class="expense-amount"><span style="font-weight: 600; color: #059669;">+ ${formatMoney(inc.amount)}</span><button class="expense-del" title="Excluir entrada" onclick="deleteIncome(${index})">×</button></span>`;
+                incomesList.appendChild(item);
+            });
 
-            let totalIncome = (trip.advance || 0) + (trip.remainder || 0) + (trip.toll || 0) + (trip.bonus || 0);
+            // Total já depositado = Adiantamento + Pedágio + Entradas extras
+            document.getElementById('det-deposited').innerText = formatMoney(c.deposited);
 
-            // Render expenses
+            // Gastos
             const reimbList = document.getElementById('reimbursable-list');
-            reimbList.innerHTML = '';
-            let reimbTotal = 0;
-
             const personalList = document.getElementById('personal-list');
+            reimbList.innerHTML = '';
             personalList.innerHTML = '';
 
             trip.expenses.forEach((exp, index) => {
                 const item = document.createElement('div');
-                item.className = 'expense-item';
-                const delBtn = `<button class="expense-del" title="Excluir gasto" onclick="deleteExpense(${index})">×</button>`;
-                if (exp.type === 'reimbursable') {
-                    reimbTotal += exp.amount;
-                    item.innerHTML = `<span>${escapeHtml(exp.title)}</span><span class="expense-amount"><span style="color: #dc2626;">- ${formatMoney(exp.amount)}</span>${delBtn}</span>`;
-                    reimbList.appendChild(item);
-                } else {
-                    item.innerHTML = `<span>${escapeHtml(exp.title)}</span><span class="expense-amount"><span style="color: #64748b;">${formatMoney(exp.amount)}</span>${delBtn}</span>`;
-                    personalList.appendChild(item);
-                }
+                item.className = 'expense-item clickable';
+                item.title = 'Toque para editar';
+                item.onclick = () => openExpenseModal({ index });
+                const isReimb = exp.type === 'reimbursable';
+                const amountHtml = isReimb
+                    ? `<span style="color: #dc2626;">- ${formatMoney(exp.amount)}</span>`
+                    : `<span style="color: #64748b;">${formatMoney(exp.amount)}</span>`;
+                item.innerHTML = `<span>${escapeHtml(tidyTitle(exp.title))}</span><span class="expense-amount">${amountHtml}<button class="expense-del" title="Excluir gasto" onclick="event.stopPropagation(); deleteExpense(${index})">×</button></span>`;
+                (isReimb ? reimbList : personalList).appendChild(item);
             });
+
+            if (reimbList.children.length === 0) {
+                reimbList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto reembolsável registrado.</div>';
+            }
+            if (personalList.children.length === 0) {
+                personalList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal registrado.</div>';
+            }
+
+            // Total de gastos (abaixo dos gastos pessoais)
+            document.getElementById('det-total-expenses').innerText = formatMoney(c.totalExpenses);
+            document.getElementById('det-total-reimb').innerText = formatMoney(c.reimbursable);
+            document.getElementById('det-total-personal').innerText = formatMoney(c.personal);
+
+            // Acerto = Saldo + Bônus sem ocorrência
+            document.getElementById('det-balance').innerText = formatMoney(c.settlement);
 
             const paidBtn = document.getElementById('btn-toggle-paid');
             if (trip.status === STATUS_PAID) {
@@ -730,16 +945,6 @@
                 paidBtn.innerText = '✅ Marcar como Pago';
                 paidBtn.classList.remove('undo');
             }
-
-            if (reimbList.children.length === 0) {
-                reimbList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto reembolsável registrado.</div>';
-            }
-            if (personalList.children.length === 0) {
-                personalList.innerHTML = '<div style="font-size: 0.8rem; color: #9ca3af;">Nenhum gasto pessoal registrado.</div>';
-            }
-
-            let balance = totalIncome - reimbTotal;
-            document.getElementById('det-balance').innerText = formatMoney(balance);
 
             document.getElementById('screen-list').classList.remove('active');
             document.getElementById('screen-detail').classList.add('active');
@@ -761,6 +966,7 @@
             openDetail(trip.id);
         }
 
+        // ---------- Gastos ----------
         function deleteExpense(index) {
             const trip = trips.find(t => t.id === currentTripId);
             if (!trip || !trip.expenses[index]) return;
@@ -772,14 +978,82 @@
             }
         }
 
-        function openExpenseModal() {
+        function selectExpenseType(type, byUser) {
+            const title = document.getElementById('expTitle').value;
+            if (isToll(title)) type = 'reimbursable';   // pedágio nunca vira pessoal
+            if (byUser) expenseTypeTouched = true;
+            document.getElementById('expType').value = type;
+            document.querySelectorAll('.type-option').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.type === type);
+            });
+        }
+
+        function onExpenseTitleChange() {
+            const title = document.getElementById('expTitle').value;
+            const hint = document.getElementById('expTypeHint');
+            const personalBtn = document.querySelector('.type-option[data-type="personal"]');
+
+            if (isToll(title)) {
+                personalBtn.disabled = true;
+                selectExpenseType('reimbursable');
+                hint.innerText = '🔒 Pedágio é sempre reembolsável.';
+                return;
+            }
+            personalBtn.disabled = false;
+
+            if (!expenseTypeTouched) {
+                const suggestion = suggestType(title);
+                if (suggestion) selectExpenseType(suggestion);
+            }
+            hint.innerText = isAmbiguous(title)
+                ? '⚠️ Uber/táxi/hospedagem: confirme quem pagou — a empresa ou você.'
+                : '';
+        }
+
+        // options: { index } para editar, ou { title, amount, fromVoice } para pré-preencher
+        function openExpenseModal(options = {}) {
+            const trip = trips.find(t => t.id === currentTripId);
+            if (!trip) return;
+            const form = document.getElementById('expenseForm');
+            form.reset();
+            expenseTypeTouched = false;
+            editingExpenseIndex = null;
+
+            let title = options.title || '';
+            let amount = options.amount || '';
+            let type = 'reimbursable';
+
+            if (typeof options.index === 'number' && trip.expenses[options.index]) {
+                const exp = trip.expenses[options.index];
+                editingExpenseIndex = options.index;
+                title = exp.title;
+                amount = exp.amount;
+                type = exp.type;
+                expenseTypeTouched = true;   // ao editar, mantém o tipo salvo
+                document.getElementById('expModalTitle').innerText = 'Editar Gasto';
+                document.getElementById('expModalSub').innerText = 'Altere os dados ou mude quem pagou.';
+            } else if (options.fromVoice) {
+                document.getElementById('expModalTitle').innerText = '🎙️ Confirmar Gasto';
+                document.getElementById('expModalSub').innerText = `Ouvi: "${options.heard}". Confira e escolha quem pagou.`;
+                type = suggestType(title) || 'personal';
+            } else {
+                document.getElementById('expModalTitle').innerText = 'Novo Gasto';
+                document.getElementById('expModalSub').innerText = 'Registre um gasto desta viagem.';
+            }
+
+            document.getElementById('expTitle').value = title;
+            document.getElementById('expAmount').value = amount;
+            selectExpenseType(type);
+            onExpenseTitleChange();
+
             document.getElementById('expenseModal').classList.add('active');
-            document.getElementById('expTitle').focus();
+            if (!title) document.getElementById('expTitle').focus();
         }
 
         function closeExpenseModal() {
             document.getElementById('expenseModal').classList.remove('active');
             document.getElementById('expenseForm').reset();
+            editingExpenseIndex = null;
         }
 
         function saveExpense(e) {
@@ -788,15 +1062,62 @@
             if (!trip) return;
             const title = document.getElementById('expTitle').value.trim();
             const amount = parseFloat(document.getElementById('expAmount').value);
-            const type = document.getElementById('expType').value;
+            let type = document.getElementById('expType').value;
             if (!title || !(amount > 0)) return;
+            if (isToll(title)) type = 'reimbursable';
 
-            trip.expenses.push({ title: title, amount: amount, type: type });
+            const expense = { title: tidyTitle(title), amount: amount, type: type };
+            if (editingExpenseIndex !== null && trip.expenses[editingExpenseIndex]) {
+                trip.expenses[editingExpenseIndex] = expense;
+            } else {
+                trip.expenses.push(expense);
+            }
             saveToStorage();
             closeExpenseModal();
             openDetail(trip.id);
         }
 
+        // ---------- Entradas extras ----------
+        function openIncomeModal(options = {}) {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Entrada' : 'Nova Entrada';
+            document.getElementById('incTitle').value = options.title || '';
+            document.getElementById('incAmount').value = options.amount || '';
+            document.getElementById('incomeModal').classList.add('active');
+            if (!options.title) document.getElementById('incTitle').focus();
+        }
+
+        function closeIncomeModal() {
+            document.getElementById('incomeModal').classList.remove('active');
+            document.getElementById('incomeForm').reset();
+        }
+
+        function saveIncome(e) {
+            e.preventDefault();
+            const trip = trips.find(t => t.id === currentTripId);
+            if (!trip) return;
+            const title = document.getElementById('incTitle').value.trim();
+            const amount = parseFloat(document.getElementById('incAmount').value);
+            if (!title || !(amount > 0)) return;
+
+            trip.incomes.push({ title: tidyTitle(title), amount: amount });
+            saveToStorage();
+            closeIncomeModal();
+            openDetail(trip.id);
+        }
+
+        function deleteIncome(index) {
+            const trip = trips.find(t => t.id === currentTripId);
+            if (!trip || !trip.incomes[index]) return;
+            const inc = trip.incomes[index];
+            if (confirm(`Excluir a entrada "${inc.title}" (${formatMoney(inc.amount)})?`)) {
+                trip.incomes.splice(index, 1);
+                saveToStorage();
+                openDetail(trip.id);
+            }
+        }
+
+        // ---------- Navegação / Nova viagem ----------
         function showList() {
             document.getElementById('screen-detail').classList.remove('active');
             document.getElementById('screen-list').classList.add('active');
@@ -829,6 +1150,7 @@
                 remainder: remainder,
                 toll: toll,
                 bonus: bonus,
+                incomes: [],
                 expenses: []
             };
 
@@ -838,7 +1160,7 @@
             document.getElementById('tripForm').reset();
         }
 
-        // Reconhecimento de Voz Real
+        // ---------- Reconhecimento de Voz ----------
         let recognition = null;
         function startVoiceRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -855,17 +1177,13 @@
 
             recognition.onresult = function(event) {
                 const speechResult = event.results[0][0].transcript.toLowerCase();
-                processVoiceCommand(speechResult);
                 stopVoiceRecognition();
+                processVoiceCommand(speechResult);
             };
 
             recognition.onerror = function(event) {
                 document.getElementById('voice-status').innerText = 'Não entendi. Tente novamente.';
                 setTimeout(stopVoiceRecognition, 2000);
-            };
-
-            recognition.onend = function() {
-                // Fechou
             };
 
             recognition.start();
@@ -878,36 +1196,36 @@
             document.getElementById('voiceModal').classList.remove('active');
         }
 
-        function processVoiceCommand(text) {
+        // Interpreta a frase falada. Retorna { kind: 'income'|'expense', title, amount } ou null.
+        function parseVoiceText(text) {
             const numbers = text.match(/\d+([.,]\d+)?/);
-            if (!numbers) {
+            if (!numbers) return null;
+            const amount = parseFloat(numbers[0].replace(',', '.'));
+            const isIncome = /(recebi|depositaram|depositou|deposito|diaria|entrada)/.test(normalize(text));
+
+            // Remove o valor e palavras de ligação apenas quando são palavras inteiras
+            let title = text
+                .replace(numbers[0], ' ')
+                .replace(/(^|\s)(gastei|gasto|paguei|recebi|depositaram|depositou|reais|real|r\$|de|do|da|com|no|na|em|uma|um)(?=\s|$)/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (!title) title = isIncome ? "Entrada" : "Gasto Diverso";
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+
+            return { kind: isIncome ? 'income' : 'expense', title, amount };
+        }
+
+        function processVoiceCommand(text) {
+            const parsed = parseVoiceText(text);
+            if (!parsed) {
                 alert(`Ouvi: "${text}"\nNão consegui identificar o valor em dinheiro.`);
                 return;
             }
-
-            const amount = parseFloat(numbers[0].replace(',', '.'));
-            // Remove o valor e palavras de ligação apenas quando são palavras inteiras
-            // (antes, "desodorante" virava "sodorante" e "dentista" virava "ntista").
-            let title = text
-                .replace(numbers[0], ' ')
-                .replace(/(^|\s)(gastei|gasto|paguei|reais|real|r\$|de|do|da|com|no|na|em)(?=\s|$)/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (!title) title = "Gasto Diverso";
-            title = title.charAt(0).toUpperCase() + title.slice(1);
-
-            let type = "personal";
-            const lower = title.toLowerCase();
-            if (lower.includes('uber') || lower.includes('taxi') || lower.includes('hospedagem') || lower.includes('hotel') || lower.includes('peca') || lower.includes('conserto')) {
-                type = "reimbursable";
-            }
-
-            const trip = trips.find(t => t.id === currentTripId);
-            if (trip) {
-                trip.expenses.push({ title: title, amount: amount, type: type });
-                saveToStorage();
-                openDetail(trip.id);
-                alert(`🎙️ Registrado por voz!\n"${title}" - ${formatMoney(amount)}\n(${type === 'reimbursable' ? 'Reembolsável' : 'Gasto Pessoal'})`);
+            // Em vez de salvar direto, abre o formulário para confirmar (e escolher quem pagou)
+            if (parsed.kind === 'income') {
+                openIncomeModal({ title: parsed.title, amount: parsed.amount, fromVoice: true });
+            } else {
+                openExpenseModal({ title: parsed.title, amount: parsed.amount, fromVoice: true, heard: text });
             }
         }
 
