@@ -728,7 +728,10 @@
                 <div class="card-section">
                     <div class="card-section-header">
                         <h3>Gastos do Dia a Dia</h3>
-                        <button type="button" class="btn-edit-inline" onclick="openDailyModal()">+ Adicionar</button>
+                        <div style="display: flex; gap: 6px;">
+                            <button type="button" class="btn-edit-inline" onclick="startVoiceRecognition('daily')" title="Adicionar por voz">🎤</button>
+                            <button type="button" class="btn-edit-inline" onclick="openDailyModal()">+ Adicionar</button>
+                        </div>
                     </div>
                     <div id="daily-expenses-list"></div>
                     <div class="tap-hint">Toque em um gasto do dia a dia para editar.</div>
@@ -1024,7 +1027,8 @@
         <div id="dailyModal" class="modal">
             <div class="modal-card">
                 <h3 id="dailyModalTitle">Novo Gasto do Dia a Dia</h3>
-                <p>Registre um gasto pessoal fora das viagens.</p>
+                <p id="dailyModalSub">Registre um gasto pessoal fora das viagens.</p>
+                <button type="button" id="btnDailyVoice" class="btn-scan-sheet" onclick="closeDailyModal(); startVoiceRecognition('daily');">🎤 Falar Gasto por Voz</button>
                 <form id="dailyForm" onsubmit="saveDailyExpense(event)">
                     <div class="form-group">
                         <label>Descrição</label>
@@ -1630,25 +1634,34 @@
             netEl.style.color = netMonth < 0 ? '#fecaca' : '#ffffff';
         }
 
-        function openDailyModal(id = null) {
+        function openDailyModal(id = null, options = {}) {
             const form = document.getElementById('dailyForm');
             form.reset();
             editingDailyId = null;
 
             const existing = id !== null ? dailyExpenses.find(d => d.id === id) : null;
+            const voiceBtn = document.getElementById('btnDailyVoice');
             if (existing) {
                 editingDailyId = existing.id;
+                voiceBtn.style.display = 'none';
                 document.getElementById('dailyModalTitle').innerText = 'Editar Gasto do Dia a Dia';
+                document.getElementById('dailyModalSub').innerText = 'Altere os dados do gasto.';
                 document.getElementById('dailyTitle').value = existing.title;
                 document.getElementById('dailyAmount').value = existing.amount;
                 document.getElementById('dailyDate').value = existing.date;
             } else {
-                document.getElementById('dailyModalTitle').innerText = 'Novo Gasto do Dia a Dia';
+                voiceBtn.style.display = 'flex';
+                document.getElementById('dailyModalTitle').innerText = options.fromVoice ? '🎙️ Confirmar Gasto' : 'Novo Gasto do Dia a Dia';
+                document.getElementById('dailyModalSub').innerText = options.fromVoice
+                    ? `Ouvi: "${options.heard}". Confira os dados abaixo.`
+                    : 'Registre um gasto pessoal fora das viagens.';
+                if (options.title) document.getElementById('dailyTitle').value = options.title;
+                if (options.amount) document.getElementById('dailyAmount').value = options.amount;
                 const now = new Date();
                 document.getElementById('dailyDate').value = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
             }
             document.getElementById('dailyModal').classList.add('active');
-            document.getElementById('dailyTitle').focus();
+            if (!options.title && !existing) document.getElementById('dailyTitle').focus();
         }
 
         function closeDailyModal() {
@@ -2058,13 +2071,18 @@
 
         // ---------- Reconhecimento de Voz ----------
         let recognition = null;
-        function startVoiceRecognition() {
+        let voiceTarget = 'trip';
+        function startVoiceRecognition(target = 'trip') {
+            voiceTarget = target;
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
                 alert('Seu navegador não suporta reconhecimento de voz. Tente usar o Google Chrome no Android.');
                 return;
             }
 
+            document.getElementById('voice-status').innerHTML = target === 'daily'
+                ? 'Dite o gasto do dia a dia, ex: <br><em>"Gastei 50 no mercado"</em> ou <em>"Farmácia 35"</em>'
+                : 'Dite o gasto ou a entrada, ex: <br><em>"Gastei 45 de almoço"</em>, <em>"Uber 30"</em> ou <br><em>"Recebi 100 de diária"</em>';
             document.getElementById('voiceModal').classList.add('active');
             recognition = new SpeechRecognition();
             recognition.lang = 'pt-BR';
@@ -2115,6 +2133,10 @@
             const parsed = parseVoiceText(text);
             if (!parsed) {
                 alert(`Ouvi: "${text}"\nNão consegui identificar o valor em dinheiro.`);
+                return;
+            }
+            if (voiceTarget === 'daily') {
+                openDailyModal(null, { title: parsed.title, amount: parsed.amount, fromVoice: true, heard: text });
                 return;
             }
             // Em vez de salvar direto, abre o formulário para confirmar (e escolher quem pagou)
