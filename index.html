@@ -70,15 +70,25 @@
         }
         /* No celular (ou instalado como app) a tela inteira é o app: sem a moldura de "celular falso" */
         @media (max-width: 480px), (display-mode: standalone) {
+            /* A página fica presa à tela: só o conteúdo de cada tela (.screen) rola.
+               Sem isso o "elástico" do Android arrasta o app inteiro, barra de baixo junto. */
+            html, body {
+                height: 100%;
+                overflow: hidden;
+                overscroll-behavior: none;
+            }
             body {
                 padding: 0;
+                min-height: 0;
                 align-items: stretch;
                 background: var(--surface-0);
             }
+            .screen, .modal, .modal-card {
+                overscroll-behavior: contain;
+            }
             .phone-container {
                 max-width: none;
-                height: 100vh;
-                height: 100dvh;
+                height: 100%;
                 max-height: none;
                 border: 0;
                 border-radius: 0;

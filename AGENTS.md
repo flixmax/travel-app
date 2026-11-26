@@ -8,6 +8,10 @@ Todo o texto da interface é em português do Brasil.
 - `index.html`: o app inteiro (HTML + CSS + JS puro, sem framework nem build).
 - `sw.js`: service worker (busca na rede primeiro; se a rede falhar ou demorar mais de 3 s, usa o cache).
 - `manifest.json`, `icon-192.png`, `icon-512.png`: instalação como app no celular.
+- `icon.svg`: fonte do ícone (estrada com a faixa amarela central das rodovias brasileiras e a moeda
+  R$ nascendo no horizonte, nas cores do app). Os PNGs são gerados a partir dele em 1024px e reduzidos.
+  A arte vai até as bordas e o conteúdo importante fica no círculo central de 80% (zona segura), por isso
+  os mesmos PNGs servem como `any` e `maskable` no manifest.
 - `travel_app_prototype.html`: protótipo antigo com dados simulados. **Não é usado pelo app.**
 
 ## Publicação (importante)
@@ -83,6 +87,8 @@ Todas estão na função `calcTrip()`.
   cor solta no HTML nem no JS: use as classes `.amount.pos / .neg / .muted / .accent`, `.empty-line` etc.
 - No celular (até 480px ou instalado) o app ocupa a tela inteira, sem a moldura de "celular" que
   aparece no computador. Respeita as áreas seguras (`env(safe-area-inset-*)`).
+- No celular, `html` e `body` ficam travados (`overflow: hidden; overscroll-behavior: none`) e só as
+  `.screen` rolam. Não tire isso: sem a trava, o "elástico" do Android arrasta o app inteiro.
 - Campos com 16px (abaixo disso o iPhone dá zoom) e alvos de toque com pelo menos 40–44px (`--tap`).
 - A cor da barra de navegação do Android vem do `theme_color` do `manifest.json` (`#0F172A`), que é
   a mesma do fim do degradê da barra do app (`navGrad`). Mudou uma, mude a outra. O Android grava essa
